@@ -1,0 +1,16 @@
+-- Kreirao sam node.js projekat
+-- Kreirao sam test server.js kako bih se uverio da prikazuje pocetnu stranicu
+-- Kreirao sam index.html i prateci css, pokusao da ga posaljem kroz server.js kako bih se uverio da radi
+-- Kreirao sam app.js i ostale .js sa osnovnih funkcionalnostima prikaza hardcoded teksta i highlight-a koji je takodje hardcoded
+-- Instalirao sam pdf-parse kako bih mogao da parsiram pdf fajlove i njihov txt sadrzaj prikazem na stranici
+-- Kreirao sam Uploads folder u kome ce se naci pdf falovi
+-- Dodao sam fju za ucitavanje tj upload-ovanje pdf-ova, i oni se onda 
+--      salju putem fetch fje kroz stream direktno serveru koji ih obradjuje, tj parsira i vraca
+--      rezultat kao json koji sadrzi text tog pdf-a, on se prikazuje kasnije na frontu
+-- Kreirao sam fju koja tokenizuje text tako da je svaka rec tj token poseban span, to ce mi
+--      posluziti kasnije da na osnovu tih indeksa mogu da dodelim odredjenom spanu klasu za highlight
+-- Potrebno je kreirati .env sa API kljucem ka besplatnom API LLM-u to je ovde GROQ i instalirati npm install dotenv
+-- Pozvacemo LLM da nam vrati indexe reci tj tokena koje highlightujemo a fja prima i koji nivo highlight-a je potreban kroz % reci teksta.
+-- Koristim ovaj prompt:
+--    const prompt = `You are given a numbered list of words from a document in this format: index:word. Identify the ${targetCount} most important words, the ones a reader should highlight as important for learning. Respond with only and only a JSON array of the integer indices and nothing else. No explanation or comments! Words are: ${numberedWords}`;
+--      
