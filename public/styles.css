@@ -94,6 +94,7 @@ body {
     width: 100%;
     height: 100%;
     justify-content: start;
+    padding: 0 5px 0 5px;
     align-items: center;
 }
 
@@ -104,15 +105,14 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin: 0 5px 0 5px;
     border-radius: 0 25px 25px 25px;
-    padding: 4px;
+    padding: 4px 12px 4px 12px;
 }
 
 .zoom-container
 {
     display: flex;
-    justify-content: center;
+    justify-content: end;
     flex: 1;
     order: 2;
 }
@@ -123,7 +123,7 @@ body {
     color: var(--back_2);
     background-color: white;
     border-radius: 8px;
-    font-size: 0.9vmax;
+    font-size: 90%;
     padding: 0.3vmax;
 }
 
@@ -137,47 +137,174 @@ p {
     text-align: justify;
 }
 
+/* Header - logo*/
 
 .main-header {
-    font-size: 3vw;
+    font-size: 250%;
+}
+
+/* Highlight level kreiranje i prikaz dugmadi */
+
+.levels-fab-container
+{
+    /* visibility: hidden; */
+    background-color: var(--back_3);
+    padding: 6px;
+    border-radius: 16px 16px 0 0;
+    display: block;
+    position: fixed;
+    right: 24px;
+    bottom: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: center;
+    max-height: 80vh;
+    z-index: 999;
 }
 
 .create-level-btn
 {
+    order: 1;
     background-color: var(--color_on);
     color: white;
     border: none;
     margin: 4px;
     border-radius: 8px;
     font-weight: bold;
-    font-size: 0.9vmax;
-    padding: 0.3vmax; 
+    font-size: 90%;
+    padding: 8px; 
 }
 
-.highlight-btn, .highlight-btn-custom {
+.expand-levels-btn
+{
+    order: 999;
+    background-color: var(--back_3);
+    border: 1px solid white;
+    color: white;
+    border: none;
+    margin: 4px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 90%;
+    padding: 8px;
+    height: 100%;
+}
+
+.highlight-levels-container
+{
+    transition: max-height 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background-color: var(--back_3);
+    max-height: 60vh;
+    width: 100%;
+}
+
+.no-height
+{
+    max-height: 0;
+}
+
+.highlight-level-btn-container
+{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 2px;
+}
+
+.highlight-level-btn
+{
+    border: none;
+    color: var(--back_2);
+    font-weight: bold;
+    font-size: 90%;
+    padding: 2px;
+}
+
+.higlight-type-ai
+{
+    width: 100%;
+    border-radius: 6px;
+}
+
+.higlight-type-custom
+{
+    flex: 1;
+    border-radius: 6px 0 0 6px;
+}
+
+.level-info-container
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px;
+    overflow: hidden;
+}
+
+.level-info-header
+{
+    font-size: 80%;
+    font-weight: bold;
+}
+
+.level-info-type
+{
+    font-size: 70%;
+}
+
+.level-info-percent
+{
+    font-size: 69%;
+}
+
+.highlight-edit-btn
+{
+    border: none;
+    color: var(--back_2);
+    font-weight: bold;
+    font-size: 90%;
+    padding: 2px;
+    border-radius: 0 6px 6px 0;
+}
+
+.highlight-active
+{
+    background-color: var(--color_ative);
+    color: white;
+}
+
+.highlight-inactive
+{
+    background-color: var(--color_inactive);
+    color: white;
+}
+
+.highlight-unhighlighted
+{
+    background-color: white;
+    color: var(--back_2);
+}
+
+
+
+
+/* DEPRICATED : levels button u header-u */
+
+/* .highlight-btn, .highlight-btn-custom {
     border: none;
     margin: 4px;
     border-radius: 8px;
     color: var(--back_2);
     font-weight: bold;
-    font-size: 0.9vmax;
+    font-size: 90%;
     padding: 0.3vmax;
-}
-
-.page-renderer-container {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-}
-
-.page-text{
-    text-align: justify;
-    margin: 0;
-    padding: 20px;
-    white-space: pre-wrap;
 }
 
 .levels-container 
@@ -187,7 +314,6 @@ p {
     flex: 1;
     justify-content:end;
     order: 3;
-    overflow: hidden;
 }
 
 .highlight-btn {
@@ -217,7 +343,7 @@ p {
     background-color: var(--color_on);
     color: white;
 }
-
+ */
 .highlight-1 {
     background-color: rgb(255 255 0 / 50%);
 }
@@ -248,29 +374,13 @@ p {
     color: black;
 }
 
-.highlight-active
-{
-    background-color: var(--color_ative);
-    color: white;
-}
-
-.highlight-inactive
-{
-    background-color: var(--color_inactive);
-    color: white;
-}
-
-.highlight-unhighlighted
-{
-    background-color: white;
-    color: var(--back_2);
-}
-
 button:hover
 {
-    opacity: 80%;
+    opacity: 90%;
     transform: scale(110%);
 }
+
+/* Header - select a file*/
 
 .file-input{
     display: none;
@@ -290,7 +400,7 @@ button:hover
     background-color: white;
     border-radius: 8px;
     width: auto;
-    font-size: 0.9vmax;
+    font-size: 90%;
     padding: 0.3vmax;
 }
 
@@ -300,13 +410,15 @@ button:hover
     transform: scale(110%);
 }
 
+/* Header - prikaz imena fajla*/
+
 .file-name-container
 {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    margin: 0 5px 10px 5px;
+    margin-bottom: 10px;
     width: 100%;
 }
 
@@ -316,8 +428,19 @@ button:hover
     border-radius: 0 0 25px 25px;
     width: auto;
     padding: 4px 20px 8px 20px;
-    font-size: 1.2vmax;
+    font-size: 120%;
     color: var(--back_1);
+}
+
+/* Page rendering */
+
+.page-renderer-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 hr {
@@ -386,81 +509,10 @@ pre {
 }
 
 .hidden {
-    visibility: hidden;
+    /* visibility: hidden; */
+    display: none;
 }
 
-
-/* Overlay za loading */
-.overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.7);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-}
-
-.star{
-    font-size:64px;
-    color:var(--color_4);
-    animation:spin 1.2s linear infinite;
-}
-
-@keyframes spin{
-    from{ transform:rotate(0deg); }
-    to{ transform:rotate(360deg); }
-}
-
-/*Overlay za yes/no*/
-.dialog-container
-{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    background-color: var(--primary);
-    color: var(--back_2);
-    padding: 8px;
-    border-radius: 8px;
-    border: 2px solid var(--back_2);
-    font-family: 'HeaderFont';
-}
-
-.dialog-text-container
-{
-    padding: 4px;
-}
-
-.dialog-btn-container
-{
-    display: flex;
-    width: 100%;
-    justify-content: space-evenly;
-    padding: 4px;
-}
-
-.dialog-btn-yes
-{
-    border: none;
-    padding: 8px;
-    background-color: var(--color_on);
-    color: white;
-    width: auto;
-    border-radius: 2px;
-    font-weight: bold;
-}
-
-.dialog-btn-no
-{
-    border: none;
-    padding: 8px;
-    background-color: var(--color_off);
-    color: white;
-    width: auto;
-    border-radius: 2px;
-    font-weight: bold;
-}
 
 .token-highlight-mode
 {
@@ -497,3 +549,166 @@ pre {
         width: 25%; 
     }
 } */
+
+
+/* Modal za kreiranje novog levela */
+
+.modal-container
+{
+    background-color: white;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'HeaderFont';
+    user-select: none;
+}
+
+.modal-text-container
+{
+    display: flex;
+    justify-content: center;
+}
+
+.modal-text
+{
+    text-align: center;
+}
+
+.modal-form-container
+{
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 4px 40px 4px;
+}
+
+.modal-form-group-container
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 4px 8px 4px;
+}
+
+.form-level-input, .form-percent-input
+{
+    text-align: center;
+    width: auto;
+    max-width: 40%;
+    font-width: bold;
+    
+}
+
+.modal-btn-container
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    padding: 6px;
+    width: 100%;
+}
+
+.modal-btn-confirm
+{
+    width: auto;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    background-color: var(--color_on);
+    font-weight: bold;
+    color: white;
+}
+
+.modal-btn-cancel
+{
+    width: auto;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    background-color: var(--color_off);
+    font-weight: bold;
+    color: white;
+}
+
+
+/* Overlay za loading */
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.star{
+    font-size:64px;
+    color:var(--color_4);
+    animation:spin 1.2s linear infinite;
+}
+
+@keyframes spin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+}
+
+/*Overlay za yes/no*/
+.dialog-container
+{
+    background-color: white;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'HeaderFont';
+    user-select: none;
+}
+
+.dialog-text-container
+{
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+}
+
+.dialog-btn-container
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    padding: 6px;
+    width: 100%;
+   
+}
+
+.dialog-btn-yes
+{
+    width: auto;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    background-color: var(--color_on);
+    font-weight: bold;
+    color: white;
+}
+
+.dialog-btn-no
+{
+    width: auto;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    background-color: var(--color_off);
+    font-weight: bold;
+    color: white;
+}

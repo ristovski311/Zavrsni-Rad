@@ -16,7 +16,7 @@ function resetInfo()
     levelActive = {};
 }
 /////// ---depricated
-
+ 
 
 export async function DrawMainPage(container)
 {
@@ -52,39 +52,16 @@ export async function DrawMainPage(container)
 
     // Buttons za levele
     const levelsContainer = DrawElement(optionsToolbar, "div", ["levels-container"]);
-
-    const createLevelBtn = DrawElement(levelsContainer, "button", ["create-level-btn"], "New level")
-
-    createLevelBtn.addEventListener("click", () => {
-        alert("TODO Create new level")
-    })
-
-    const customHighlightBtn = DrawElement(levelsContainer, "button", ["highlight-btn-custom", `level-custom`, "highlight-unhighlighted"], `Custom`)
-    const customHighlightActiveBtn = DrawElement(levelsContainer, "button", ["highlight-btn-custom", `level-custom-active`, "highlight-custom-off"], `Off`)
-
-    customHighlightActiveBtn.addEventListener("click", () => {
-        ToggleCustomHighlight();
-
-        const turningOn = customHighlightOn;
-        customHighlightActiveBtn.classList.toggle("highlight-custom-on", turningOn);
-        customHighlightActiveBtn.classList.toggle("highlight-custom-off", !turningOn);
-        customHighlightActiveBtn.textContent = turningOn ? "On" : "Off";      
-    });
-
-    customHighlightBtn.addEventListener("click", () => {
-        ToggleCustomHighlightVisibility(pageContainer, customHighlightBtn);
-    })
     
-    for(let i = 1; i <= 6; i++)
-    {
-        const hightlightButton = DrawElement(levelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
-    }
-
+    // for(let i = 1; i <= 6; i++)
+    // {
+    //     const hightlightButton = DrawElement(levelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
+    // }
 
     // Prikaz naziva trenutno otvorenog fajl-a
 
     const fileNameContainer = DrawElement(headerContainer, "div", ["file-name-container"]);
-    const fileNameHeader = DrawElement(fileNameContainer, "h5", ["file-name-header"], fileName);
+    const fileNameHeader = DrawElement(fileNameContainer, "h2", ["file-name-header"], app_state ? app_state.fileName : "No file opened.");
 
 
     // Container za page
@@ -160,10 +137,13 @@ export async function DrawMainPage(container)
             tempContainer.innerHTML = articleElement.innerHTML;
             TokenizeDOM(tempContainer);
 
-            const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
-            if(decision)
-                saveState();
-            
+            if(app_state)
+            {
+                const decision = await ShowYesNoDialog("Do you want to save the current state?", "Yes", "No")
+                if(decision)
+                    saveState();
+            }
+
             const pages = PaginateContent(tempContainer);
 
             createState(fileName, pages.length)
@@ -173,6 +153,7 @@ export async function DrawMainPage(container)
             pageIndicator.textContent = `1 / ${pages.length}`
 
             fileNameHeader.textContent = fileName;
+            await DrawLevelsFAB(mainContainer);
         } 
         else if (extension == "html")
         {
@@ -186,19 +167,23 @@ export async function DrawMainPage(container)
             tempContainer.innerHTML = articleElement.innerHTML;
             TokenizeDOM(tempContainer);
 
-            const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
-            if(decision)
-                saveState();
+            if(app_state)
+            {
+                const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
+                if(decision)
+                    saveState();
+            }
 
             const pages = PaginateContent(tempContainer);
 
             createState(fileName, pages.length)
-            console.log(app_state)
 
             RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
             
             fileNameHeader.textContent = fileName;
+
+            await DrawLevelsFAB(mainContainer);
         }
         else
         {
@@ -213,7 +198,7 @@ export async function DrawMainPage(container)
     for(let i = 0; i < highlightBtns.length; i++)
     {
         highlightBtns[i].addEventListener("click", async(e) => {
-            const hideOverlay = showLoadingOverlay();
+            const hideOverlay = ShowLoadingOverlay();
 
             try{
                 await Hightlight(pageContainer, 10*(highlightBtns.length-i), i+1, highlightBtns[i]);
@@ -224,13 +209,174 @@ export async function DrawMainPage(container)
         });
     }
 
+    
 }
 
+function OpenCreateLevelModal(container)
+{
+    return new Promise(
+        resolve => {
+            const overlay = document.createElement("div");
+            overlay.className = "overlay";
+            
+            const modalContainer = DrawElement(overlay, "div", ["modal-container"]);
+            const modalTextContainer = DrawElement(modalContainer, "div", ["modal-text-container"]);
+            const modalText = DrawElement(modalTextContainer, "h2", ["modal-text"], "Create new highlight level")
+            
+            const modalFormContainer = DrawElement(modalContainer, "div", ["modal-form-container"]);
+            const modalForm = DrawElement(modalFormContainer, "form", ["modal-form"]);
+            
+            const newLevelCount = app_state.getCurrentLevelCount() + 1;
 
+            const formLevelLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
+            const formLevelLbl = DrawElement(formLevelLblContainer, "label", ["form-level-lbl"], "Level");
+            const formLevelInput = DrawElement(formLevelLblContainer, "input", ["form-level-input"]);
+            formLevelInput.type = "text";
+            formLevelInput.disabled = true;
+            formLevelInput.value = newLevelCount;
+            
+            const formTypeLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
+            const formTypeLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Type");
+            const formTypeRadioAI = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
+            const formTypeRadioAILbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "AI");
+            const formTypeRadioCustom = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
+            const formTypeRadioCustomLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Custom");
+            formTypeRadioAI.type = "radio";
+            formTypeRadioAI.id = "highlightTypeAI";
+            formTypeRadioAI.name = "highlightType"
+            formTypeRadioAI.value = "AI"
+            formTypeRadioAI.checked = true;
+            formTypeRadioAI.addEventListener("change", () => {
+                modalForm.querySelector(".modal-form-percent-container").style.display = "flex";
+            })
 
+            formTypeRadioCustom.type = "radio";
+            formTypeRadioCustom.id = "highlightTypeCustom";
+            formTypeRadioCustom.name = "highlightType"
+            formTypeRadioCustom.value = "Custom"
+            formTypeRadioCustom.addEventListener("change", () => {
+                modalForm.querySelector(".modal-form-percent-container").style.display = "none";
+            })
+            
+            const formPercentContainer = DrawElement(modalForm, "div", ["modal-form-group-container", "modal-form-percent-container"])
+            const formPercentLbl = DrawElement(formPercentContainer, "label", ["form-percent-lbl"], "% of text");
+            const formPercentInput = DrawElement(formPercentContainer, "input", ["form-percent-input"]);
+            formPercentInput.type = "number";
+            formPercentInput.value = 50;
+            formPercentInput.min = 1;
+            formPercentInput.max = 100;
 
+            const modalBtnContainer = DrawElement(modalContainer, "div", ["modal-btn-container"]);
+            const modalBtnConfirm = DrawElement(modalBtnContainer, "button", ["modal-btn-confirm"], "Create");
+            const modalBtnCancel = DrawElement(modalBtnContainer, "button", ["modal-btn-cancel"], "Cancel");
+        
 
+            modalBtnConfirm.addEventListener("click", () =>
+            {
+                app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null)
+                console.log(app_state)
+                overlay.remove();
+                resolve(true);
+            })
+        
+            modalBtnCancel.addEventListener("click", () =>
+            {
+                overlay.remove();
+                resolve(false);
+            })
 
+            document.body.appendChild(overlay);
+        }
+    )
+}
+
+async function DrawLevelsFAB(container)
+{
+    // Kreiranje novog nivoa highlight-a i lista postojecih nivoa
+
+    const existingFAB = container.querySelector(".levels-fab-container");
+    if(existingFAB)
+        existingFAB.remove();
+
+    const levelsFABContainer = DrawElement(container, "div", ["levels-fab-container"]);
+    const createLevelBtn = DrawElement(levelsFABContainer, "button", ["create-level-btn"], "+ New level")
+    const expandLevelsBtn = DrawElement(levelsFABContainer, "button", ["expand-levels-btn"])
+    expandLevelsBtn.innerText = "⏶⏶⏶\nLevels";
+    const highlightLevelsContainer = DrawElement(levelsFABContainer, "div", ["highlight-levels-container", "no-height"])
+    expandLevelsBtn.addEventListener("click", () => {
+        if(expandLevelsBtn.innerText === "⏶⏶⏶\nLevels")
+            expandLevelsBtn.innerText = "Levels\n⏷⏷⏷"
+        else
+            expandLevelsBtn.innerText = "⏶⏶⏶\nLevels"
+        highlightLevelsContainer.classList.toggle("no-height");
+    })
+
+    createLevelBtn.addEventListener("click", async () => {
+        if(app_state)
+        {
+            const res = await OpenCreateLevelModal(container);
+            if(res)
+                RenderLevelButtons(highlightLevelsContainer);
+            if(highlightLevelsContainer.classList.contains("no-height"))
+                expandLevelsBtn.click();
+        }
+    })
+    
+    // if(app_state)
+    //     RenderLevelButtons(highlightLevelsContainer);
+
+    // for(let i = 1; i <= 26; i++)
+    // {
+    //     const hightlightButton = DrawElement(highlightLevelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
+    // }
+    
+    // const customHighlightBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom`, "highlight-unhighlighted"], `Custom`)
+    // const customHighlightActiveBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom-active`, "highlight-custom-off"], `Off`)
+
+    // customHighlightActiveBtn.addEventListener("click", () => {
+    //     ToggleCustomHighlight();
+
+    //     const turningOn = customHighlightOn;
+    //     customHighlightActiveBtn.classList.toggle("highlight-custom-on", turningOn);
+    //     customHighlightActiveBtn.classList.toggle("highlight-custom-off", !turningOn);
+    //     customHighlightActiveBtn.textContent = turningOn ? "On" : "Off";      
+    // });
+
+    // customHighlightBtn.addEventListener("click", () => {
+    //     ToggleCustomHighlightVisibility(pageContainer, customHighlightBtn);
+    // })
+}
+
+function RenderLevelButtons(container)
+{
+    container.innerHTML = "";
+
+    const levels = app_state.levels
+    levels.forEach(l => {
+        DrawLevelButton(container, l.level, l.type, l.percent);
+    });
+}
+
+function DrawLevelButton(container, level, type, percent)
+{
+    let btnContainer = DrawElement(container, "div", ["highlight-level-btn-container"]);
+    let levelButton = DrawElement(btnContainer, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
+    let levelInfoContainer = DrawElement(levelButton, "div", ["level-info-container"])
+    let levelInfoHeader = DrawElement(levelInfoContainer, "p", ["level-info-header"], `LVL ${level}`)
+    let infoTypeText = `${type.toUpperCase()}`
+    if(type === "ai")
+        infoTypeText += ` [${percent}%]`;
+    let levelInfoType = DrawElement(levelInfoContainer, "p", ["level-info-type"], infoTypeText)
+    // if(type === "ai")
+    // {
+    //     let levelInfoPercent = DrawElement(levelInfoContainer, "p", ["level-info-percent"], `${percent}%`)
+    // }
+    if(type === "custom")
+    {
+        let levelCustomEditBtn = DrawElement(btnContainer, "button", ["highlight-edit-btn", `highlight-edit-${level}-btn`], "✎");
+    }
+    return btnContainer
+} 
 
 function ToggleCustomHighlight()
 {
@@ -310,7 +456,6 @@ function RefreshAllButtonStates()
 
     UpdateHighlightButtonState(document.querySelector(".level-custom"), `${currentPageIndex}-custom`);
 }
-
 
 function TokenizeText(container, text)
 {

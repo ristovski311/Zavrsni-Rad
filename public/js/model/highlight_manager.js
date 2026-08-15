@@ -24,12 +24,17 @@ export class HighlightManager
         */
     }
 
-    addLevel(highlightLevel)
+    addLevel(level, type, percent = null)
     {
-        if(!this.levels.some(l => l.level === highlightLevel.level))       
+        if(!this.levels.some(l => l.level === level))       
         {
-            this.levels.push(highlightLevel);
+            this.levels.push(new HighlightLevel(level, type, percent));
         }
+    }
+
+    getCurrentLevelCount()
+    {
+        return this.levels.length;
     }
 
     removeTopLevel()
