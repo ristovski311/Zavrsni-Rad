@@ -1,7 +1,9 @@
-import { DrawElement, GetFileExtension, showLoadingOverlay } from "./helpers.js";
+import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog } from "../misc/helpers.js";
+import { app_state, createState, loadState, saveState } from "../state/app_state.js";
 
+
+//////// ---depricated
 // Informacije
-let currentText = "";
 let levelHighlights = {};
 let levelActive = {};    
 let fileName = "No file opened."
@@ -10,29 +12,26 @@ let customHighlightOn = false;
 
 function resetInfo()
 {
-    currentText = "";
     levelHighlights = {};
     levelActive = {};
 }
+/////// ---depricated
+
 
 export async function DrawMainPage(container)
 {
     //Header i glavni container
-
     const mainContainer = DrawElement(container, "div", ["main-container"]);
 
     //Header container
-    
     const headerContainer = DrawElement(mainContainer, "div", ["header-container"]);
     const mainHeaderContainer = DrawElement(headerContainer, "div", ["main-header-container"]);
     const mainHeader = DrawElement(mainHeaderContainer, "h1", ["main-header", "header"], "Highlighter");
     const subHeader = DrawElement(mainHeader, "span", ["sub-header", "header"], "prototype");
 
     // Opcije container - u header-u
-
     const optionsContainer = DrawElement(headerContainer, "div", ["options-container"]);
     const optionsToolbar = DrawElement(optionsContainer, "div", ["options-toolbar"])
-
     const zoomContainer = DrawElement(optionsToolbar, "div", ["zoom-container"])
     const zoomHeader = DrawElement(zoomContainer, "h3", ["zoom-header"], "Zoom: ");
     const zoomValue = DrawElement(zoomHeader, "span", ["zoom-value"], "100%");
@@ -40,9 +39,7 @@ export async function DrawMainPage(container)
     
 
     // File input
-    
     const fileInputContainer = DrawElement(optionsToolbar, "div", ["file-input-container"]);
-
     const fileInput = DrawElement(fileInputContainer, "input", ["file-input"]);
     fileInput.type = "file";
     fileInput.accept = ".md, .html, .htm";
@@ -51,10 +48,17 @@ export async function DrawMainPage(container)
     fileInputLbl.setAttribute("for", "file-upload");
 
 
-    // Buttons za levele
+    ////// TODO MORA DA BUDE PROMENJENO - KREIRAJU SE DINAMICKI KAO I LEVELI
 
+    // Buttons za levele
     const levelsContainer = DrawElement(optionsToolbar, "div", ["levels-container"]);
-    
+
+    const createLevelBtn = DrawElement(levelsContainer, "button", ["create-level-btn"], "New level")
+
+    createLevelBtn.addEventListener("click", () => {
+        alert("TODO Create new level")
+    })
+
     const customHighlightBtn = DrawElement(levelsContainer, "button", ["highlight-btn-custom", `level-custom`, "highlight-unhighlighted"], `Custom`)
     const customHighlightActiveBtn = DrawElement(levelsContainer, "button", ["highlight-btn-custom", `level-custom-active`, "highlight-custom-off"], `Off`)
 
@@ -118,7 +122,7 @@ export async function DrawMainPage(container)
     const pageContainer = DrawElement(pageRendererContainer, "div", ["container", "page-container"]); 
     
     let paperZoom = 1;
-    document.addEventListener("wheel", e=>{
+    document.addEventListener("wheel", e=> {
         if(!e.ctrlKey)
             return;
 
@@ -131,8 +135,6 @@ export async function DrawMainPage(container)
 
         zoomValue.innerText = `${(paperZoom*100).toFixed(0)}%`;
     }, {passive: false});
-    
-    const pageText = DrawElement(pageContainer, "p", ["page-text"]);
     
 
     // File input handler za odabir doc-a
@@ -158,7 +160,15 @@ export async function DrawMainPage(container)
             tempContainer.innerHTML = articleElement.innerHTML;
             TokenizeDOM(tempContainer);
 
+            const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
+            if(decision)
+                saveState();
+            
             const pages = PaginateContent(tempContainer);
+
+            createState(fileName, pages.length)
+            console.log(app_state)
+
             RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
 
@@ -176,7 +186,15 @@ export async function DrawMainPage(container)
             tempContainer.innerHTML = articleElement.innerHTML;
             TokenizeDOM(tempContainer);
 
+            const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
+            if(decision)
+                saveState();
+
             const pages = PaginateContent(tempContainer);
+
+            createState(fileName, pages.length)
+            console.log(app_state)
+
             RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
             
@@ -184,7 +202,7 @@ export async function DrawMainPage(container)
         }
         else
         {
-            pageText.innerText = `Unsupported file type: .${extension}`;
+            alert("Unsupported file type selected!");
         }
     });
 
@@ -207,6 +225,12 @@ export async function DrawMainPage(container)
     }
 
 }
+
+
+
+
+
+
 
 function ToggleCustomHighlight()
 {

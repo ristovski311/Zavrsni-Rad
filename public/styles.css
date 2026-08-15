@@ -142,6 +142,18 @@ p {
     font-size: 3vw;
 }
 
+.create-level-btn
+{
+    background-color: var(--color_on);
+    color: white;
+    border: none;
+    margin: 4px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9vmax;
+    padding: 0.3vmax; 
+}
+
 .highlight-btn, .highlight-btn-custom {
     border: none;
     margin: 4px;
@@ -175,11 +187,11 @@ p {
     flex: 1;
     justify-content:end;
     order: 3;
-    margin: 0 4px 0 4px;
+    overflow: hidden;
 }
 
 .highlight-btn {
-    margin: 5px;
+    margin: 3px;
 }
 
 .level-custom
@@ -398,6 +410,56 @@ pre {
 @keyframes spin{
     from{ transform:rotate(0deg); }
     to{ transform:rotate(360deg); }
+}
+
+/*Overlay za yes/no*/
+.dialog-container
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: var(--primary);
+    color: var(--back_2);
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid var(--back_2);
+    font-family: 'HeaderFont';
+}
+
+.dialog-text-container
+{
+    padding: 4px;
+}
+
+.dialog-btn-container
+{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    padding: 4px;
+}
+
+.dialog-btn-yes
+{
+    border: none;
+    padding: 8px;
+    background-color: var(--color_on);
+    color: white;
+    width: auto;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.dialog-btn-no
+{
+    border: none;
+    padding: 8px;
+    background-color: var(--color_off);
+    color: white;
+    width: auto;
+    border-radius: 2px;
+    font-weight: bold;
 }
 
 .token-highlight-mode
