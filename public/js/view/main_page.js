@@ -1,22 +1,13 @@
 import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog } from "../misc/helpers.js";
-import { app_state, createState, loadState, saveState } from "../state/app_state.js";
-
-
-//////// ---depricated
-// Informacije
-let levelHighlights = {};
-let levelActive = {};    
-let fileName = "No file opened."
+import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer } from "../state/app_state.js";
+import { TokenizeDOM } from "../document/tokenization.js";
+import { PaginateContent } from "../document/pagination.js";
+import { RenderPages, ShowPage } from "./page_rendering.js";
+import { DrawLevelsFAB, RenderLevelButtons } from "./levels.js";
+import { Highlight, RenderHighlights } from "./highlighting.js";
+import { UpdateHighlightButtonState, RefreshAllButtonStates } from "./levels.js";
 
 let customHighlightOn = false;
-
-function resetInfo()
-{
-    levelHighlights = {};
-    levelActive = {};
-}
-/////// ---depricated
- 
 
 export async function DrawMainPage(container)
 {
@@ -32,71 +23,80 @@ export async function DrawMainPage(container)
     // Opcije container - u header-u
     const optionsContainer = DrawElement(headerContainer, "div", ["options-container"]);
     const optionsToolbar = DrawElement(optionsContainer, "div", ["options-toolbar"])
+    
+    // Zoom
     const zoomContainer = DrawElement(optionsToolbar, "div", ["zoom-container"])
     const zoomHeader = DrawElement(zoomContainer, "h3", ["zoom-header"], "Zoom: ");
     const zoomValue = DrawElement(zoomHeader, "span", ["zoom-value"], "100%");
     DrawElement(optionsContainer, "hr");
     
-
-    // File input
+    // File input i ucitavanje prethodnog stanja
     const fileInputContainer = DrawElement(optionsToolbar, "div", ["file-input-container"]);
     const fileInput = DrawElement(fileInputContainer, "input", ["file-input"]);
     fileInput.type = "file";
     fileInput.accept = ".md, .html, .htm";
     fileInput.id = "file-upload";
-    const fileInputLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl"], "Select a file")
+    const fileInputLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl"], "Open a file")
     fileInputLbl.setAttribute("for", "file-upload");
-
-
-    ////// TODO MORA DA BUDE PROMENJENO - KREIRAJU SE DINAMICKI KAO I LEVELI
-
-    // Buttons za levele
-    const levelsContainer = DrawElement(optionsToolbar, "div", ["levels-container"]);
     
-    // for(let i = 1; i <= 6; i++)
-    // {
-    //     const hightlightButton = DrawElement(levelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
-    // }
+    const fileStateInput = DrawElement(fileInputContainer, "input", ["file-input"]);
+    fileStateInput.type = "file";
+    fileStateInput.accept = ".hljson";
+    fileStateInput.id = "file-state-upload";
+    const fileStateLoaderLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-loader-btn", "hidden"], "Load progress")
+    fileStateLoaderLbl.setAttribute("for", "file-state-upload");
+
+    const fileStateSaveLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-save-btn", "hidden"], "Save progress")
+    fileStateSaveLbl.addEventListener("click", () => {
+        saveState();
+    })
 
     // Prikaz naziva trenutno otvorenog fajl-a
 
     const fileNameContainer = DrawElement(headerContainer, "div", ["file-name-container"]);
     const fileNameHeader = DrawElement(fileNameContainer, "h2", ["file-name-header"], app_state ? app_state.fileName : "No file opened.");
-
+    
 
     // Container za page
 
     const pageViewContainer = DrawElement(mainContainer, "div", ["page-view-container"]);
-
-
+    
     // Prev/next page buttons
-
+    
     const pageNavContainer = DrawElement(pageViewContainer, "div", ["page-nav-container", "hidden"]);
     const prevBtn = DrawElement(pageNavContainer, "button", ["nav-btn"], "◀");
     const pageIndicator = DrawElement(pageNavContainer, "span", ["page-indicator"], "1 / 1");
     const nextBtn = DrawElement(pageNavContainer, "button", ["nav-btn"], "▶");
-
+    
     prevBtn.addEventListener("click", () => {
         if (currentPageIndex > 0) {
             ShowPage(pageRendererContainer, currentPageIndex - 1);
             pageIndicator.textContent = `${currentPageIndex + 1} / ${allPages.length}`;
-            RefreshAllButtonStates();
+            RefreshAllButtonStates(mainContainer);
         }
     });
     nextBtn.addEventListener("click", () => {
         if (currentPageIndex < allPages.length - 1) {
             ShowPage(pageRendererContainer, currentPageIndex + 1);
             pageIndicator.textContent = `${currentPageIndex + 1} / ${allPages.length}`;
-            RefreshAllButtonStates();
+            RefreshAllButtonStates(mainContainer);
         }
     });
     DrawElement(pageViewContainer, "hr");
- 
-
+    
+    
     // Sam prikaz papira
-
+    
     const pageRendererContainer = DrawElement(pageViewContainer, "div", ["container", "page-renderer-container"]);
     const pageContainer = DrawElement(pageRendererContainer, "div", ["container", "page-container"]); 
+    setPageContainer(pageContainer);    
+    const pageWelcomePaper = DrawElement(pageContainer, "div", ["paper", "active-page"]);
+    const pageWelcomeContentContainer = DrawElement(pageWelcomePaper, "div", ["page-content"])
+    const pageLogoImg = DrawElement(pageWelcomeContentContainer, "img", ["page-welcome-logo"]);
+    pageLogoImg.src = "../assets/images/logo.png"
+    pageLogoImg.alt = "Logo image."
+    const pageWelcomeHeaderMain = DrawElement(pageWelcomeContentContainer, "h1", ["page-welcome-main-header"], "Try opening a file!")
+    const pageWelcomeHeaderSub = DrawElement(pageWelcomeContentContainer, "h2", ["page-welcome-sub-header"], "You can open one using 'Open a file' button in the toolbar.")
     
     let paperZoom = 1;
     document.addEventListener("wheel", e=> {
@@ -114,85 +114,98 @@ export async function DrawMainPage(container)
     }, {passive: false});
     
 
-    // File input handler za odabir doc-a
-    
+    // File input handler za odabir doc-a i state-a
+
     fileInput.addEventListener("change", async () => {
         const file = fileInput.files[0];
-        if (!file) return;
+        if (!file) 
+            return;
 
         const extension = GetFileExtension(file.name);
 
-        resetInfo();
-        fileName = file.name;
+        const fileName = file.name;
 
-        if (extension === "md") 
+        if (extension === "md" || extension === "html") 
         {
-            const rawHTML = marked.parse(await file.text())
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(rawHTML, "text/html");
-            const articleElement = doc.querySelector("#mw-content-text") || doc.body;
-            articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
-
-            const tempContainer = document.createElement("div");
-            tempContainer.innerHTML = articleElement.innerHTML;
-            TokenizeDOM(tempContainer);
-
+            // Cuvanje prethodnog stanja
             if(app_state)
             {
                 const decision = await ShowYesNoDialog("Do you want to save the current state?", "Yes", "No")
                 if(decision)
                     saveState();
             }
-
-            const pages = PaginateContent(tempContainer);
-
-            createState(fileName, pages.length)
-            console.log(app_state)
-
-            RenderPages(pageContainer, pages);
-            pageIndicator.textContent = `1 / ${pages.length}`
-
+            
+            // Naziv file-a
             fileNameHeader.textContent = fileName;
             await DrawLevelsFAB(mainContainer);
-        } 
-        else if (extension == "html")
-        {
-            const rawHTML = await file.text();
+
+            // Dugmici za stanja
+            const stateLoaderLbl = mainContainer.querySelector(".file-state-loader-btn");
+            if(stateLoaderLbl.classList.contains("hidden"))
+                stateLoaderLbl.classList.toggle("hidden");
+
+            const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
+            if(stateSaveBtn.classList.contains("hidden"))
+                stateSaveBtn.classList.toggle("hidden");
+            
+            // Parsiranje ucitanog file-a u html ako je .md
+            let rawHTML;
+            if(extension === "md")
+                rawHTML = marked.parse(await file.text())
+            else
+                rawHTML = await file.text();
+            
             const parser = new DOMParser();
             const doc = parser.parseFromString(rawHTML, "text/html");
             const articleElement = doc.querySelector("#mw-content-text") || doc.body;
             articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
-
+            
+            // Tokenizacija html dokumenta dobijenog parsiranjem .md
             const tempContainer = document.createElement("div");
             tempContainer.innerHTML = articleElement.innerHTML;
-            TokenizeDOM(tempContainer);
-
-            if(app_state)
-            {
-                const decision = await ShowYesNoDialog("Do you want to save current state?", "Yes", "No")
-                if(decision)
-                    saveState();
-            }
-
+            TokenizeDOM(tempContainer); //-Rezultat je 
+            
+            // Rezultat je lista 
             const pages = PaginateContent(tempContainer);
 
+            //Kreiranje novog stanja
             createState(fileName, pages.length)
 
+            //Rendering stranica
             RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
-            
-            fileNameHeader.textContent = fileName;
-
-            await DrawLevelsFAB(mainContainer);
-        }
+        } 
         else
         {
             alert("Unsupported file type selected!");
         }
     });
 
+    fileStateInput.addEventListener("change", async () => {
+        const file = fileStateInput.files[0];
+        if(!file)
+            return;
 
-    // Level buttons handler
+        const extension = GetFileExtension(file.name);
+        if(extension === "hljson")
+        {
+            const fileText = await file.text();
+            const jsonObj = JSON.parse(fileText);
+            loadState(jsonObj);
+            console.log(app_state);
+
+            DrawLevelsFAB(mainContainer);
+            RenderHighlights(pageContainer);
+        }
+        else
+        {
+            alert("Unsupported file type selected!");
+        }
+
+    });
+
+
+    // Level buttons handler // depricated
 
     const highlightBtns = document.querySelectorAll(".highlight-btn");
     for(let i = 0; i < highlightBtns.length; i++)
@@ -203,180 +216,16 @@ export async function DrawMainPage(container)
             try{
                 await Hightlight(pageContainer, 10*(highlightBtns.length-i), i+1, highlightBtns[i]);
             }
+            catch(e)
+            {
+                console.log(`Error highlighting:\n ${e.message()}`)
+            }
             finally{
                 hideOverlay();
             }
         });
     }
-
-    
 }
-
-function OpenCreateLevelModal(container)
-{
-    return new Promise(
-        resolve => {
-            const overlay = document.createElement("div");
-            overlay.className = "overlay";
-            
-            const modalContainer = DrawElement(overlay, "div", ["modal-container"]);
-            const modalTextContainer = DrawElement(modalContainer, "div", ["modal-text-container"]);
-            const modalText = DrawElement(modalTextContainer, "h2", ["modal-text"], "Create new highlight level")
-            
-            const modalFormContainer = DrawElement(modalContainer, "div", ["modal-form-container"]);
-            const modalForm = DrawElement(modalFormContainer, "form", ["modal-form"]);
-            
-            const newLevelCount = app_state.getCurrentLevelCount() + 1;
-
-            const formLevelLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
-            const formLevelLbl = DrawElement(formLevelLblContainer, "label", ["form-level-lbl"], "Level");
-            const formLevelInput = DrawElement(formLevelLblContainer, "input", ["form-level-input"]);
-            formLevelInput.type = "text";
-            formLevelInput.disabled = true;
-            formLevelInput.value = newLevelCount;
-            
-            const formTypeLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
-            const formTypeLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Type");
-            const formTypeRadioAI = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
-            const formTypeRadioAILbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "AI");
-            const formTypeRadioCustom = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
-            const formTypeRadioCustomLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Custom");
-            formTypeRadioAI.type = "radio";
-            formTypeRadioAI.id = "highlightTypeAI";
-            formTypeRadioAI.name = "highlightType"
-            formTypeRadioAI.value = "AI"
-            formTypeRadioAI.checked = true;
-            formTypeRadioAI.addEventListener("change", () => {
-                modalForm.querySelector(".modal-form-percent-container").style.display = "flex";
-            })
-
-            formTypeRadioCustom.type = "radio";
-            formTypeRadioCustom.id = "highlightTypeCustom";
-            formTypeRadioCustom.name = "highlightType"
-            formTypeRadioCustom.value = "Custom"
-            formTypeRadioCustom.addEventListener("change", () => {
-                modalForm.querySelector(".modal-form-percent-container").style.display = "none";
-            })
-            
-            const formPercentContainer = DrawElement(modalForm, "div", ["modal-form-group-container", "modal-form-percent-container"])
-            const formPercentLbl = DrawElement(formPercentContainer, "label", ["form-percent-lbl"], "% of text");
-            const formPercentInput = DrawElement(formPercentContainer, "input", ["form-percent-input"]);
-            formPercentInput.type = "number";
-            formPercentInput.value = 50;
-            formPercentInput.min = 1;
-            formPercentInput.max = 100;
-
-            const modalBtnContainer = DrawElement(modalContainer, "div", ["modal-btn-container"]);
-            const modalBtnConfirm = DrawElement(modalBtnContainer, "button", ["modal-btn-confirm"], "Create");
-            const modalBtnCancel = DrawElement(modalBtnContainer, "button", ["modal-btn-cancel"], "Cancel");
-        
-
-            modalBtnConfirm.addEventListener("click", () =>
-            {
-                app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null)
-                console.log(app_state)
-                overlay.remove();
-                resolve(true);
-            })
-        
-            modalBtnCancel.addEventListener("click", () =>
-            {
-                overlay.remove();
-                resolve(false);
-            })
-
-            document.body.appendChild(overlay);
-        }
-    )
-}
-
-async function DrawLevelsFAB(container)
-{
-    // Kreiranje novog nivoa highlight-a i lista postojecih nivoa
-
-    const existingFAB = container.querySelector(".levels-fab-container");
-    if(existingFAB)
-        existingFAB.remove();
-
-    const levelsFABContainer = DrawElement(container, "div", ["levels-fab-container"]);
-    const createLevelBtn = DrawElement(levelsFABContainer, "button", ["create-level-btn"], "+ New level")
-    const expandLevelsBtn = DrawElement(levelsFABContainer, "button", ["expand-levels-btn"])
-    expandLevelsBtn.innerText = "⏶⏶⏶\nLevels";
-    const highlightLevelsContainer = DrawElement(levelsFABContainer, "div", ["highlight-levels-container", "no-height"])
-    expandLevelsBtn.addEventListener("click", () => {
-        if(expandLevelsBtn.innerText === "⏶⏶⏶\nLevels")
-            expandLevelsBtn.innerText = "Levels\n⏷⏷⏷"
-        else
-            expandLevelsBtn.innerText = "⏶⏶⏶\nLevels"
-        highlightLevelsContainer.classList.toggle("no-height");
-    })
-
-    createLevelBtn.addEventListener("click", async () => {
-        if(app_state)
-        {
-            const res = await OpenCreateLevelModal(container);
-            if(res)
-                RenderLevelButtons(highlightLevelsContainer);
-            if(highlightLevelsContainer.classList.contains("no-height"))
-                expandLevelsBtn.click();
-        }
-    })
-    
-    // if(app_state)
-    //     RenderLevelButtons(highlightLevelsContainer);
-
-    // for(let i = 1; i <= 26; i++)
-    // {
-    //     const hightlightButton = DrawElement(highlightLevelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
-    // }
-    
-    // const customHighlightBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom`, "highlight-unhighlighted"], `Custom`)
-    // const customHighlightActiveBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom-active`, "highlight-custom-off"], `Off`)
-
-    // customHighlightActiveBtn.addEventListener("click", () => {
-    //     ToggleCustomHighlight();
-
-    //     const turningOn = customHighlightOn;
-    //     customHighlightActiveBtn.classList.toggle("highlight-custom-on", turningOn);
-    //     customHighlightActiveBtn.classList.toggle("highlight-custom-off", !turningOn);
-    //     customHighlightActiveBtn.textContent = turningOn ? "On" : "Off";      
-    // });
-
-    // customHighlightBtn.addEventListener("click", () => {
-    //     ToggleCustomHighlightVisibility(pageContainer, customHighlightBtn);
-    // })
-}
-
-function RenderLevelButtons(container)
-{
-    container.innerHTML = "";
-
-    const levels = app_state.levels
-    levels.forEach(l => {
-        DrawLevelButton(container, l.level, l.type, l.percent);
-    });
-}
-
-function DrawLevelButton(container, level, type, percent)
-{
-    let btnContainer = DrawElement(container, "div", ["highlight-level-btn-container"]);
-    let levelButton = DrawElement(btnContainer, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
-    let levelInfoContainer = DrawElement(levelButton, "div", ["level-info-container"])
-    let levelInfoHeader = DrawElement(levelInfoContainer, "p", ["level-info-header"], `LVL ${level}`)
-    let infoTypeText = `${type.toUpperCase()}`
-    if(type === "ai")
-        infoTypeText += ` [${percent}%]`;
-    let levelInfoType = DrawElement(levelInfoContainer, "p", ["level-info-type"], infoTypeText)
-    // if(type === "ai")
-    // {
-    //     let levelInfoPercent = DrawElement(levelInfoContainer, "p", ["level-info-percent"], `${percent}%`)
-    // }
-    if(type === "custom")
-    {
-        let levelCustomEditBtn = DrawElement(btnContainer, "button", ["highlight-edit-btn", `highlight-edit-${level}-btn`], "✎");
-    }
-    return btnContainer
-} 
 
 function ToggleCustomHighlight()
 {
@@ -433,166 +282,6 @@ function HandleCustomHighlightSelection()
     UpdateHighlightButtonState(document.querySelector(".level-custom"), cacheKey);
 }
 
-function UpdateHighlightButtonState(button, cacheKey)
-{
-    button.classList.remove("highlight-unhighlighted", "highlight-inactive", "highlight-active");
-
-    if (levelHighlights[cacheKey] === undefined) {
-        button.classList.add("highlight-unhighlighted"); // jos nije racunato za ovu stranicu
-    } else if (levelActive[cacheKey]) {
-        button.classList.add("highlight-active");         // izracunato I trenutno prikazano
-    } else {
-        button.classList.add("highlight-inactive");       // izracunato, ali trenutno skriveno
-    }
-}
-
-function RefreshAllButtonStates()
-{
-    const highlightBtns = document.querySelectorAll(".highlight-btn");
-    highlightBtns.forEach((btn, i) => {
-        const level = i + 1;
-        UpdateHighlightButtonState(btn, `${currentPageIndex}-${level}`);
-    });
-
-    UpdateHighlightButtonState(document.querySelector(".level-custom"), `${currentPageIndex}-custom`);
-}
-
-function TokenizeText(container, text)
-{
-    container.innerHTML = "";
-    const parts = text.split(/(\s+)/);
-    let index = 0;
-    for(const part of parts)
-    {
-        if(part == "")
-            continue;
-        if(/^\s+$/.test(part))
-        {
-            const span = DrawElement(container, "span", ["token"], part);
-            span.dataset.index = index;
-        }
-        else
-        {
-            const span = DrawElement(container, "span", ["token"], part);
-            span.dataset.index = index;
-            index++;
-        }
-    }
-}
-
-function TokenizeDOM(container)
-{
-    let index = 0;
-
-    function walk(node)
-    {
-        const children = Array.from(node.childNodes);
-        for(const child of children)
-        {
-            if(child.nodeType === Node.TEXT_NODE)
-            {
-                const text = child.textContent;
-                if(text.trim() === "")
-                    continue;
-
-                const parts = text.split(/(\s+)/);
-                const fragment = document.createDocumentFragment();
-
-                for(const part of parts)
-                {
-                    if(part === "")
-                        continue;
-                    if(/^\s+$/.test(part))
-                        fragment.appendChild(document.createTextNode(part));
-                    else
-                    {
-                        const span = document.createElement("span");
-                        span.classList.add("token");
-                        span.dataset.index = index;
-                        span.textContent = part;
-                        fragment.appendChild(span);
-                        index++;
-                    }
-                }
-                child.replaceWith(fragment);
-            }
-            else if(child.nodeType === Node.ELEMENT_NODE)
-            {
-                if(child.tagName !== "IMG" && child.tagName != "BR")
-                {
-                    walk(child);
-                }
-            }
-        }
-    }
-
-    walk(container);
-}
-
-function PaginateContent(sourceContainer) {
-    const pages = [];
-    let currentPage = document.createElement("div");
-    currentPage.classList.add("page-content");
-
-    // Privremeni "papir" wrapper, isti kao pravi, koristi se samo za merenje
-    const measuringPaper = document.createElement("div");
-    measuringPaper.classList.add("paper");
-    measuringPaper.style.position = "absolute";
-    measuringPaper.style.visibility = "hidden";
-    measuringPaper.style.display = "block"; // .paper inače ima display:none dok nije .active-page
-    document.body.appendChild(measuringPaper);
-
-    const blocks = Array.from(sourceContainer.children);
-
-    for (const block of blocks) {
-        currentPage.appendChild(block);
-
-        measuringPaper.appendChild(currentPage);
-        const overflowing = currentPage.scrollHeight > currentPage.clientHeight;
-        measuringPaper.removeChild(currentPage);
-
-        if (overflowing) {
-            currentPage.removeChild(block);
-            pages.push(currentPage);
-
-            currentPage = document.createElement("div");
-            currentPage.classList.add("page-content");
-            currentPage.appendChild(block);
-        }
-    }
-    pages.push(currentPage);
-
-    document.body.removeChild(measuringPaper); // očisti privremeni element
-    return pages;
-}
-
-let allPages = [];
-let currentPageIndex = 0;
-
-function RenderPages(pageViewer, pages) {
-    document.querySelector(".page-nav-container").classList.remove("hidden");
-    
-    pageViewer.innerHTML = "";
-    allPages = pages;
-    currentPageIndex = 0;
-
-    pages.forEach((pageContent, i) => {
-        const paper = document.createElement("div");
-        paper.classList.add("paper");
-        if (i === 0) 
-            paper.classList.add("active-page");
-        paper.appendChild(pageContent);
-        pageViewer.appendChild(paper);
-    });
-}
-
-function ShowPage(pageViewer, index) {
-    const papers = pageViewer.querySelectorAll(".paper");
-    papers.forEach(p => p.classList.remove("active-page"));
-    papers[index].classList.add("active-page");
-    currentPageIndex = index;
-}
-
 function ToggleCustomHighlightVisibility(pageContainer, button)
 {
     const cacheKey = `${currentPageIndex}-custom`;
@@ -617,56 +306,5 @@ function ToggleCustomHighlightVisibility(pageContainer, button)
     });
 
     UpdateHighlightButtonState(button, cacheKey);
-}
-
-async function Hightlight(pageContainer, percent, level, btn)
-{
-    const activePaper = pageContainer.querySelectorAll(".paper")[currentPageIndex];
-    const pageContentElement = activePaper.querySelector(".page-content");
-    const pageContentText = pageContentElement.textContent;
-
-    const cacheKey = `${currentPageIndex}-${level}`;
-
-    try{
-        if(levelHighlights[cacheKey] === undefined)
-        {
-            const response = await fetch("/api/highlight", {
-                method : "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({text: pageContentText, percent})
-            });
-    
-            if(!response.ok)
-            {
-                const err = await response.json();
-                alert(`Response is not ok!: ${err.error}`);
-                return;
-            }
-    
-            const { indices } = await response.json();
-            const indexSet = new Set(indices);
-
-            levelHighlights[cacheKey] = new Set(indices);
-        }
-        
-        levelActive[cacheKey] = !levelActive[cacheKey];
-        const isActive = levelActive[cacheKey];
-        const indexSet = levelHighlights[cacheKey];
-
-        const pageTokens = pageContentElement.querySelectorAll(".token");
-        pageTokens.forEach((span, localIdx) => {
-            if (indexSet.has(localIdx)) {
-                span.classList.toggle(`highlight-${level}`, isActive);
-            }
-        }); 
-
-        UpdateHighlightButtonState(btn, cacheKey);
-    }
-    catch(err)
-    {
-        alert(`Highlight failed! + ${err.error}`);
-    }
 }
 

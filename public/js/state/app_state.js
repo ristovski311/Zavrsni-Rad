@@ -1,6 +1,24 @@
 import { HighlightManager } from "../model/highlight_manager.js";
 
 export let app_state;
+export let allPages = [];
+export let currentPageIndex = 0;
+export let pageContainer;
+
+export function setPageContainer(container)
+{
+    pageContainer = container;
+}
+
+export function setAllPages(pages)
+{
+    allPages = pages;
+}
+
+export function setCurrentPageIndex(index)
+{
+    currentPageIndex = index;
+}
 
 export function createState(filename, pageCount)
 {
@@ -26,7 +44,7 @@ export function saveState()
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${app_state.fileName}.state.json`;
+    a.download = `${app_state.fileName}.hljson`;
 
     a.click();
 

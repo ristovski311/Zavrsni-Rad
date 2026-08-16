@@ -10,7 +10,7 @@ export class HighlightManager
         this.activeLevelsByPage = {}
         for(let i = 0; i < numOfPages; i++)
         {
-            this.activeLevelsByPage[i] = []
+            this.activeLevelsByPage[i] = [];
         }
         
         /*
@@ -22,6 +22,83 @@ export class HighlightManager
             }
 
         */
+    }
+
+    isPageHighlightedForLevel(level, page)
+    {
+        const lvl = this.levels.find(l => l.level == level);
+        if(!lvl)
+            return false;
+
+        if(!lvl.getPageIndices(page))
+            return false;
+        else
+        {
+            return true;
+        }
+    }
+
+    setPageIndicesForLevel(level, page, indices)
+    {
+        const lvl = this.levels.find(l => l.level === level);
+        if(!lvl)
+            return false;
+
+        lvl.setPageIndices(page, indices);
+    }
+
+    getActiveLevelsForPage(page)
+    {
+        if(page in this.activeLevelsByPage)
+            return this.activeLevelsByPage[page];
+    }
+
+    isLevelActiveForPage(level, page)
+    {
+        const lvl = this.levels.find(l => l.level == level);
+        if(!lvl)
+            return false;
+
+        if(page in this.activeLevelsByPage)
+        {
+            const activeLevels = this.activeLevelsByPage[page];
+            if(activeLevels.includes(level))
+                return true;
+        }
+        return false;
+    }
+
+
+    toggleLevelForPage(level, page)
+    {
+        const lvl = this.levels.find(l => l.level === level);
+        if(!lvl)
+            return;
+
+        if(page in this.activeLevelsByPage)
+        {
+            const activeLevels = this.activeLevelsByPage[page];
+            if(activeLevels.includes(level))
+            {
+                const index = activeLevels.indexOf(level);
+                activeLevels.splice(index,1);
+            }
+            else
+                activeLevels.push(level);
+        }
+    }
+
+    getIndicesForPageAndLevel(level,page)
+    {
+        const lvl = this.levels.find(l => l.level === level);
+        if(!lvl)
+            return null;
+
+        const curPage = lvl.pages.find(p => p.page_id === page)
+        if(!curPage)
+            return null;
+
+        return curPage.indices;
     }
 
     addLevel(level, type, percent = null)

@@ -50,6 +50,8 @@ body {
     height: 100%;
 }
 
+/* Header */
+
 .header-container
 {
     display: flex;
@@ -106,7 +108,7 @@ body {
     flex-direction: row;
     align-items: center;
     border-radius: 0 25px 25px 25px;
-    padding: 4px 12px 4px 12px;
+    padding: 8px;
 }
 
 .zoom-container
@@ -119,7 +121,7 @@ body {
 
 .zoom-header
 {
-    margin: 4px;
+    /* margin: 4px; */
     color: var(--back_2);
     background-color: white;
     border-radius: 8px;
@@ -376,8 +378,8 @@ p {
 
 button:hover
 {
-    opacity: 90%;
-    transform: scale(110%);
+    opacity: 95%;
+    transform: scale(105%);
 }
 
 /* Header - select a file*/
@@ -392,10 +394,11 @@ button:hover
     flex: 1;
     justify-content: start;
     order: 1;
+    gap: 4px;
 }
 
 .file-input-lbl {
-    margin: 8px;
+    /* margin: 8px; */
     color: var(--back_2);
     background-color: white;
     border-radius: 8px;
@@ -406,8 +409,8 @@ button:hover
 
 .file-input-lbl:hover
 {
-    opacity: 80%;
-    transform: scale(110%);
+    opacity: 95%;
+    transform: scale(105%);
 }
 
 /* Header - prikaz imena fajla*/
@@ -457,21 +460,20 @@ img {
     display: flex;
     justify-content: center;
     align-items: center;
-    transform-origin: top center;
+    transform-origin: top center; /*Prilikom zoom-iranja koja je referentna tacka*/
     padding: 8px;
     overflow: scroll;
 }
 
 .paper {
-    width: 794px;
+    width: 794px; /*Hardcoded velicina papira*/
     height: 1123px;   /* A4 na 96dpi */
     background: white;
     box-shadow: 5px 5px 5px 2px gray;
     overflow: scroll;
     box-sizing: border-box;
-    display: none;
+    display: none; /* Ne vidi se stranica koja nije aktivna*/
 }
-
 
 .paper.active-page {
     display: block;
@@ -481,7 +483,7 @@ img {
     padding: 40px;
     height: 100%;
     box-sizing: border-box;
-    overflow: scroll;
+    /* overflow: scroll; */
     font-size: 18px;
 }
 
@@ -491,10 +493,49 @@ img {
     color: white;
 }
 
+.page-welcome-main-header
+{
+    font-family: 'HeaderFont';
+    text-align: center;
+    font-size: 200%;
+    font-weight: bold;
+    padding: 16px;
+}
+
+.page-welcome-sub-header
+{
+    font-family: 'HeaderFont';
+    text-align: center;
+    font-size: 150%;
+    font-weight: lighter;
+    padding: 12px;
+}
+
+.page-welcome-logo
+{
+    padding: 16px;
+    width: 30%;
+    height: auto;
+}
+
+.nav-btn
+{
+    border-radius: 8px;
+    padding: 8px;
+    margin: 0 8px 0 8px;
+}
+
 .page-indicator
 {
     color: white;
-    font-size: 1.2vmax;
+    font-size: 90%;
+    user-select: none;
+}
+
+.token-highlight-mode /*Prilikom custom (rucnog) highlight-a*/
+{
+    user-select:all;
+    cursor: pointer;
 }
 
 pre {
@@ -505,7 +546,7 @@ pre {
     color:rgb(26, 26, 26); 
     padding: 16px; 
     border-radius: 8px; 
-    overflow-x: auto; 
+    overflow-x: auto;
 }
 
 .hidden {
@@ -513,19 +554,6 @@ pre {
     display: none;
 }
 
-
-.token-highlight-mode
-{
-    user-select:all;
-    cursor: pointer;
-}
-
-.nav-btn
-{
-    border-radius: 8px;
-    padding: 8px;
-    margin: 0 8px 0 8px;
-}
 
 
 /* @media screen and (max-width: 1100px) {
