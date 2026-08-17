@@ -28,6 +28,47 @@ export class HighlightLevel
             page.indices = indices;
     }
 
+    isIndexInIndices(pageId, index)
+    {
+        const page = this.pages.find(p => p.page_id === pageId);
+        if(!page)
+        {
+            return null;
+        }
+        else if(page.indices.includes(index))
+            return true;
+        else
+            return false;
+    }
+
+    addIndexToIndices(pageId, index)
+    {
+        const page = this.pages.find(p => p.page_id === pageId);
+        if(!page)
+        {
+            this.pages.push({
+                page_id: pageId,
+                indices: [index]
+            });
+        }
+        else
+            page.indices.push(index);
+    }
+
+    removeIndexFromIndices(pageId, index)
+    {
+        const page = this.pages.find(p => p.page_id === pageId);
+        if(!page)
+        {
+            return;
+        }
+        else
+        {
+            const id = page.indices.indexOf(index);
+            page.indices.splice(id, 1);
+        }
+    }
+
     toJSON()
     {
         return {

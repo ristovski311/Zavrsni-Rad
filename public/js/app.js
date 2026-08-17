@@ -1,3 +1,4 @@
+import { loadCurrentTheme } from "./state/app_state.js";
 import { DrawMainPage } from "./view/main_page.js";
 
 async function RunApp()

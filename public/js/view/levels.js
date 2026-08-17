@@ -1,4 +1,4 @@
-import { app_state, currentPageIndex, pageContainer } from "../state/app_state.js";
+import { activeCustomLevel, app_state, currentPageIndex, isCustomHighlightActive, pageContainer,setActiveCustomLevel } from "../state/app_state.js";
 import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
 import { Highlight } from "./highlighting.js";
 
@@ -77,17 +77,20 @@ function OpenCreateLevelModal(container)
 
             const formLevelLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
             const formLevelLbl = DrawElement(formLevelLblContainer, "label", ["form-level-lbl"], "Level");
-            const formLevelInput = DrawElement(formLevelLblContainer, "input", ["form-level-input"]);
+            const formLevelInput = DrawElement(formLevelLblContainer, "input", ["form-level-input", "modal-input"]);
             formLevelInput.type = "text";
             formLevelInput.disabled = true;
             formLevelInput.value = newLevelCount;
             
             const formTypeLblContainer = DrawElement(modalForm, "div", ["modal-form-group-container"])
             const formTypeLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Type");
-            const formTypeRadioAI = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
-            const formTypeRadioAILbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "AI");
-            const formTypeRadioCustom = DrawElement(formTypeLblContainer, "input", ["form-type-radio"]);
-            const formTypeRadioCustomLbl = DrawElement(formTypeLblContainer, "label", ["form-type-lbl"], "Custom");
+            
+            const formTypeRadioAILbl = DrawElement(formTypeLblContainer, "label", ["custom-form-type-radio", "custom-form-type-radio-selected"], "AI");
+            const formTypeRadioAI = DrawElement(formTypeRadioAILbl, "input", ["form-type-radio"]);
+            
+            const formTypeRadioCustomLbl = DrawElement(formTypeLblContainer, "label", ["custom-form-type-radio"], "Custom");
+            const formTypeRadioCustom = DrawElement(formTypeRadioCustomLbl, "input", ["form-type-radio"]);
+            
             formTypeRadioAI.type = "radio";
             formTypeRadioAI.id = "highlightTypeAI";
             formTypeRadioAI.name = "highlightType"
@@ -104,10 +107,20 @@ function OpenCreateLevelModal(container)
             formTypeRadioCustom.addEventListener("change", () => {
                 modalForm.querySelector(".modal-form-percent-container").style.display = "none";
             })
+
+            formTypeLblContainer.addEventListener("change", () => {
+                formTypeLblContainer.querySelectorAll(".custom-form-type-radio").forEach(lbl => {
+                    lbl.classList.remove("custom-form-type-radio-selected");
+                });
+                const checkedInput = formTypeLblContainer.querySelector("input[name='highlightType']:checked");
+                if (checkedInput) {
+                    checkedInput.parentElement.classList.add("custom-form-type-radio-selected");
+                }
+            })
             
             const formPercentContainer = DrawElement(modalForm, "div", ["modal-form-group-container", "modal-form-percent-container"])
             const formPercentLbl = DrawElement(formPercentContainer, "label", ["form-percent-lbl"], "% of text");
-            const formPercentInput = DrawElement(formPercentContainer, "input", ["form-percent-input"]);
+            const formPercentInput = DrawElement(formPercentContainer, "input", ["form-percent-input", "modal-input"]);
             formPercentInput.type = "number";
             formPercentInput.value = 50;
             formPercentInput.min = 1;
@@ -121,6 +134,7 @@ function OpenCreateLevelModal(container)
             modalBtnConfirm.addEventListener("click", () =>
             {
                 app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null)
+                
                 overlay.remove();
                 resolve(true);
             })
@@ -152,16 +166,25 @@ function DrawLevelButton(container, level, type, percent)
     let btnContainer = DrawElement(container, "div", ["highlight-level-btn-container"]);
     let levelButton = DrawElement(btnContainer, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
     levelButton.dataset.level = level;
-    levelButton.addEventListener("click", async (e) => {
-        const hideOverlay = ShowLoadingOverlay();
-        try{
-            await Highlight(pageContainer, percent, level, levelButton);
-        }
-        finally
-        {
-            hideOverlay();
-        }
-    })
+    if(type === "ai")
+    {
+        levelButton.addEventListener("click", async (e) => {
+            const hideOverlay = ShowLoadingOverlay();
+            try{
+                await Highlight(pageContainer, percent, level, levelButton);
+            }
+            finally
+            {
+                hideOverlay();
+            }
+        })
+    }
+    else
+    {
+        levelButton.addEventListener("click", async (e) => {
+            ToggleCustomHighlightVisibility(pageContainer, levelButton, level);
+        })
+    }
 
     let levelInfoContainer = DrawElement(levelButton, "div", ["level-info-container"])
     let levelInfoHeader = DrawElement(levelInfoContainer, "p", ["level-info-header"], `LVL ${level}`)
@@ -172,9 +195,91 @@ function DrawLevelButton(container, level, type, percent)
     if(type === "custom")
     {
         let levelCustomEditBtn = DrawElement(btnContainer, "button", ["highlight-edit-btn", `highlight-edit-${level}-btn`], "✎");
+        levelCustomEditBtn.dataset.level = level;
+        levelCustomEditBtn.addEventListener("click", () => {
+            ToggleCustomHighlight(level);
+            RefreshAllEditButtonStates(container);
+        });
     }
     return levelButton
 } 
+
+// Custom highlight obrada
+
+function ToggleCustomHighlight(level)
+{
+    setActiveCustomLevel(level);
+
+    const activePage = document.querySelector(".active-page");
+    const tokens = activePage.querySelectorAll(".token");
+
+    tokens.forEach(t => {
+        t.classList.toggle("token-highlight-mode", isCustomHighlightActive());
+    });
+
+    const res = isCustomHighlightActive();
+    if(res)
+    {
+        console.log(res)        
+        activePage.addEventListener("mouseup", HandleCustomHighlightSelection);
+    }
+    else
+    {
+        console.log("Eve me ovde")
+        activePage.removeEventListener("mouseup", HandleCustomHighlightSelection);
+        window.getSelection().removeAllRanges();
+    }
+}
+
+function HandleCustomHighlightSelection()
+{
+    const level = activeCustomLevel;
+    const selection = window.getSelection();
+    if (selection.isCollapsed || selection.rangeCount === 0) 
+        return;
+
+    const range = selection.getRangeAt(0);
+    const activePage = document.querySelector(".active-page");
+    const tokens = activePage.querySelectorAll(".token");
+
+    // const cacheKey = `${currentPageIndex}-custom`;
+    // if (!levelHighlights[cacheKey]) 
+    //     levelHighlights[cacheKey] = new Set();
+
+    tokens.forEach(span => {
+        if (range.intersectsNode(span)) {
+            const idx = parseInt(span.dataset.index, 10);
+
+            if (app_state.toggleIndexForCustomHighlight(level, currentPageIndex, idx))
+                span.classList.remove(`highlight-${level}`);
+            else
+                span.classList.add(`highlight-${level}`);
+        }
+    });
+    
+    app_state.toggleLevelForPage(level, currentPageIndex);
+    selection.removeAllRanges();
+    UpdateHighlightButtonState(document.querySelector(`.highlight-level-${level}-btn`), level, currentPageIndex);
+}
+
+function ToggleCustomHighlightVisibility(pageContainer, button, level)
+{
+    app_state.toggleLevelForPage(level, currentPageIndex);
+        const isActive = app_state.isLevelActiveForPage(level, currentPageIndex);
+        const indexSet = new Set(app_state.getIndicesForPageAndLevel(level, currentPageIndex));
+
+        const pageTokens = pageContentElement.querySelectorAll(".token");
+        pageTokens.forEach((span, localIdx) => {
+            if (indexSet.has(localIdx)) {
+                span.classList.toggle(`highlight-${level}`, isActive);
+            }
+        }); 
+
+    UpdateHighlightButtonState(button, level, currentPageIndex);
+}
+
+
+// Update dugmica
 
 export function UpdateHighlightButtonState(button, level, page)
 {
@@ -192,14 +297,6 @@ export function UpdateHighlightButtonState(button, level, page)
         else
             button.classList.add("highlight-inactive"); 
     }
-
-    // if (levelHighlights[cacheKey] === undefined) {
-    //     button.classList.add("highlight-unhighlighted"); // jos nije racunato za ovu stranicu
-    // } else if (levelActive[cacheKey]) {
-    //     button.classList.add("highlight-active");         // izracunato I trenutno prikazano
-    // } else {
-    //     button.classList.add("highlight-inactive");       // izracunato, ali trenutno skriveno
-    // }
 }
 
 export function RefreshAllButtonStates(container)
@@ -209,7 +306,13 @@ export function RefreshAllButtonStates(container)
         const level = Number(btn.dataset.level);
         UpdateHighlightButtonState(btn, level, currentPageIndex);
     });
+}
 
-    //TODO za custom dugmad takodje
-    //UpdateHighlightButtonState(document.querySelector(".level-custom"), `${currentPageIndex}-custom`);
+function RefreshAllEditButtonStates(container)
+{
+    const highlightEditBtns = container.querySelectorAll(".highlight-edit-btn");
+    highlightEditBtns.forEach((btn, i) => {
+        const level = Number(btn.dataset.level);
+        btn.classList.toggle("highlight-custom-on", activeCustomLevel === level);
+    });
 }

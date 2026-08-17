@@ -138,6 +138,20 @@ export class HighlightManager
         }
     }
 
+    toggleIndexForCustomHighlight(level, page, index)
+    {
+        const lvl = this.levels.find(l => l.level === level);
+        if(!lvl)
+            return null;
+
+        const isInIndices = lvl.isIndexInIndices(page, index);
+        if(isInIndices)
+            lvl.removeIndexFromIndices(page, index);
+        else
+            lvl.addIndexToIndices(page,index);
+        return isInIndices;
+    }
+
     toJSON()
     {
         return {

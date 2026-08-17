@@ -1,11 +1,12 @@
 import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog } from "../misc/helpers.js";
-import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer } from "../state/app_state.js";
+import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel, setActiveCustomLevel, isCustomHighlightActive } from "../state/app_state.js";
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
-import { RenderPages, ShowPage } from "./page_rendering.js";
+import { OpenPageSelectionModal, RenderPages, ShowPage } from "./page_rendering.js";
 import { DrawLevelsFAB, RenderLevelButtons } from "./levels.js";
 import { Highlight, RenderHighlights } from "./highlighting.js";
 import { UpdateHighlightButtonState, RefreshAllButtonStates } from "./levels.js";
+import { OpenInformationModal, OpenThemeSelectModal, ResolveLocalResources } from "../document/utility.js";
 
 let customHighlightOn = false;
 
@@ -20,35 +21,54 @@ export async function DrawMainPage(container)
     const mainHeader = DrawElement(mainHeaderContainer, "h1", ["main-header", "header"], "Highlighter");
     const subHeader = DrawElement(mainHeader, "span", ["sub-header", "header"], "prototype");
 
-    // Opcije container - u header-u
+    // Options toolbar - u header-u
     const optionsContainer = DrawElement(headerContainer, "div", ["options-container"]);
     const optionsToolbar = DrawElement(optionsContainer, "div", ["options-toolbar"])
     
+    // Customization container
+    const customizationContainer = DrawElement(optionsToolbar, "div", ["customization-container"])
+    
+    // About app
+    const aboutButton = DrawElement(customizationContainer, "button", ["about-button", "toolbar-element"], "About app");
+    aboutButton.addEventListener("click", () => {
+        OpenInformationModal(mainContainer);
+    });
+
+
     // Zoom
-    const zoomContainer = DrawElement(optionsToolbar, "div", ["zoom-container"])
-    const zoomHeader = DrawElement(zoomContainer, "h3", ["zoom-header"], "Zoom: ");
+    const zoomHeader = DrawElement(customizationContainer, "label", ["zoom-header", "toolbar-element"], "Zoom: ");
     const zoomValue = DrawElement(zoomHeader, "span", ["zoom-value"], "100%");
-    DrawElement(optionsContainer, "hr");
+    DrawElement(optionsContainer, "hr"); 
+
+    // Theme
+    const themeButton = DrawElement(customizationContainer, "button", ["theme-button", "toolbar-element"], "Theme");
+    themeButton.addEventListener("click", () => {
+        OpenThemeSelectModal(mainContainer);
+    });
     
     // File input i ucitavanje prethodnog stanja
     const fileInputContainer = DrawElement(optionsToolbar, "div", ["file-input-container"]);
     const fileInput = DrawElement(fileInputContainer, "input", ["file-input"]);
     fileInput.type = "file";
-    fileInput.accept = ".md, .html, .htm";
+    fileInput.webkitdirectory = true;
+    fileInput.directory = true;
+    fileInput.multiple = true;
     fileInput.id = "file-upload";
-    const fileInputLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl"], "Open a file")
+    const fileInputLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "toolbar-element"], "Open a file")
     fileInputLbl.setAttribute("for", "file-upload");
     
     const fileStateInput = DrawElement(fileInputContainer, "input", ["file-input"]);
     fileStateInput.type = "file";
     fileStateInput.accept = ".hljson";
     fileStateInput.id = "file-state-upload";
-    const fileStateLoaderLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-loader-btn", "hidden"], "Load progress")
+    const fileStateLoaderLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-loader-btn", "toolbar-element", "hidden"], "Load progress")
     fileStateLoaderLbl.setAttribute("for", "file-state-upload");
 
-    const fileStateSaveLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-save-btn", "hidden"], "Save progress")
-    fileStateSaveLbl.addEventListener("click", () => {
-        saveState();
+    const fileStateSaveLbl = DrawElement(fileInputContainer, "label", ["file-input-lbl", "file-state-save-btn", "toolbar-element", "hidden"], "Save progress")
+    fileStateSaveLbl.addEventListener("click", async () => {
+        const decision = await ShowYesNoDialog("Do you want to save the current state?", "Yes", "No")
+                if(decision)
+                    saveState();
     })
 
     // Prikaz naziva trenutno otvorenog fajl-a
@@ -67,7 +87,16 @@ export async function DrawMainPage(container)
     const prevBtn = DrawElement(pageNavContainer, "button", ["nav-btn"], "◀");
     const pageIndicator = DrawElement(pageNavContainer, "span", ["page-indicator"], "1 / 1");
     const nextBtn = DrawElement(pageNavContainer, "button", ["nav-btn"], "▶");
-    
+
+    pageIndicator.addEventListener("click", async () => {
+        const res = await OpenPageSelectionModal(mainContainer, pageViewContainer);
+        if(res)
+        {
+            pageIndicator.textContent = `${currentPageIndex + 1} / ${allPages.length}`;
+            RefreshAllButtonStates(mainContainer);
+        }
+
+    })
     prevBtn.addEventListener("click", () => {
         if (currentPageIndex > 0) {
             ShowPage(pageRendererContainer, currentPageIndex - 1);
@@ -99,7 +128,7 @@ export async function DrawMainPage(container)
     const pageWelcomeHeaderSub = DrawElement(pageWelcomeContentContainer, "h2", ["page-welcome-sub-header"], "You can open one using 'Open a file' button in the toolbar.")
     
     let paperZoom = 1;
-    document.addEventListener("wheel", e=> {
+    document.addEventListener("wheel", e => {
         if(!e.ctrlKey)
             return;
 
@@ -117,14 +146,28 @@ export async function DrawMainPage(container)
     // File input handler za odabir doc-a i state-a
 
     fileInput.addEventListener("change", async () => {
-        const file = fileInput.files[0];
-        if (!file) 
+        const files = Array.from(fileInput.files);
+        if(files.length === 0)
             return;
+        
+        const contentFile = files.find(f => {
+            const extension = GetFileExtension(f.name);
+            return extension === "html" || extension === "md";
+        });
 
-        const extension = GetFileExtension(file.name);
-
-        const fileName = file.name;
-
+        const stateFile = files.find(f => {
+            const extension = GetFileExtension(f.name);
+            return extension === "hljson";
+        });
+        
+        if(!contentFile)
+        {
+            alert("No HTML or MD file found!");
+            return;
+        }
+        
+        const extension = GetFileExtension(contentFile.name);
+        const fileName = contentFile.name;
         if (extension === "md" || extension === "html") 
         {
             // Cuvanje prethodnog stanja
@@ -135,45 +178,62 @@ export async function DrawMainPage(container)
                     saveState();
             }
             
-            // Naziv file-a
-            fileNameHeader.textContent = fileName;
-            await DrawLevelsFAB(mainContainer);
+            revokeCurrentObjectURLs();
 
-            // Dugmici za stanja
-            const stateLoaderLbl = mainContainer.querySelector(".file-state-loader-btn");
-            if(stateLoaderLbl.classList.contains("hidden"))
-                stateLoaderLbl.classList.toggle("hidden");
-
-            const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
-            if(stateSaveBtn.classList.contains("hidden"))
-                stateSaveBtn.classList.toggle("hidden");
-            
             // Parsiranje ucitanog file-a u html ako je .md
             let rawHTML;
             if(extension === "md")
-                rawHTML = marked.parse(await file.text())
+                rawHTML = marked.parse(await contentFile.text())
             else
-                rawHTML = await file.text();
+                rawHTML = await contentFile.text();
             
             const parser = new DOMParser();
             const doc = parser.parseFromString(rawHTML, "text/html");
+            
+            //Resavanje lokalnih image-a
+            const urls = ResolveLocalResources(doc, contentFile, files);
+            setCurrentObjectURLs(urls);
+
             const articleElement = doc.querySelector("#mw-content-text") || doc.body;
             articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
             
             // Tokenizacija html dokumenta dobijenog parsiranjem .md
             const tempContainer = document.createElement("div");
             tempContainer.innerHTML = articleElement.innerHTML;
-            TokenizeDOM(tempContainer); //-Rezultat je 
+            TokenizeDOM(tempContainer);
             
             // Rezultat je lista 
             const pages = PaginateContent(tempContainer);
-
+            
             //Kreiranje novog stanja
             createState(fileName, pages.length)
-
+            
             //Rendering stranica
             RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
+            
+            // Dugmici za stanja
+            const stateLoaderLbl = mainContainer.querySelector(".file-state-loader-btn");
+            if(stateLoaderLbl.classList.contains("hidden"))
+                stateLoaderLbl.classList.toggle("hidden");
+            
+            const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
+            if(stateSaveBtn.classList.contains("hidden"))
+                stateSaveBtn.classList.toggle("hidden");
+            
+            // Naziv file-a
+            fileNameHeader.textContent = fileName;
+            await DrawLevelsFAB(mainContainer);
+
+            //Load prethodnog stanja ako ga je bilo u direktorijumu
+            if(stateFile)
+            {
+                const fileText = await stateFile.text();
+                const jsonObj = JSON.parse(fileText);
+                loadState(jsonObj);
+                DrawLevelsFAB(mainContainer);
+                RenderHighlights(pageContainer);
+            }
         } 
         else
         {
@@ -192,8 +252,6 @@ export async function DrawMainPage(container)
             const fileText = await file.text();
             const jsonObj = JSON.parse(fileText);
             loadState(jsonObj);
-            console.log(app_state);
-
             DrawLevelsFAB(mainContainer);
             RenderHighlights(pageContainer);
         }
@@ -201,110 +259,5 @@ export async function DrawMainPage(container)
         {
             alert("Unsupported file type selected!");
         }
-
     });
-
-
-    // Level buttons handler // depricated
-
-    const highlightBtns = document.querySelectorAll(".highlight-btn");
-    for(let i = 0; i < highlightBtns.length; i++)
-    {
-        highlightBtns[i].addEventListener("click", async(e) => {
-            const hideOverlay = ShowLoadingOverlay();
-
-            try{
-                await Hightlight(pageContainer, 10*(highlightBtns.length-i), i+1, highlightBtns[i]);
-            }
-            catch(e)
-            {
-                console.log(`Error highlighting:\n ${e.message()}`)
-            }
-            finally{
-                hideOverlay();
-            }
-        });
-    }
 }
-
-function ToggleCustomHighlight()
-{
-    customHighlightOn = !customHighlightOn;
-
-    const activePage = document.querySelector(".active-page");
-    const tokens = activePage.querySelectorAll(".token");
-
-    tokens.forEach(t => {
-        t.classList.toggle("token-highlight-mode", customHighlightOn);
-    });
-
-    if(customHighlightOn)
-    {
-        activePage.addEventListener("mouseup", HandleCustomHighlightSelection);
-    }
-    else
-    {
-        activePage.removeEventListener("mouseup", HandleCustomHighlightSelection);
-        window.getSelection().removeAllRanges();
-    }
-}
-
-function HandleCustomHighlightSelection()
-{
-    const selection = window.getSelection();
-    if (selection.isCollapsed || selection.rangeCount === 0) 
-        return;
-
-    const range = selection.getRangeAt(0);
-    const activePage = document.querySelector(".active-page");
-    const tokens = activePage.querySelectorAll(".token");
-
-    const cacheKey = `${currentPageIndex}-custom`;
-    if (!levelHighlights[cacheKey]) levelHighlights[cacheKey] = new Set();
-
-    tokens.forEach(span => {
-        if (range.intersectsNode(span)) {
-            const idx = parseInt(span.dataset.index, 10);
-
-            if (levelHighlights[cacheKey].has(idx)) {
-                levelHighlights[cacheKey].delete(idx);
-                span.classList.remove("highlight-custom");
-            } else {
-                levelHighlights[cacheKey].add(idx);
-                span.classList.add("highlight-custom");
-            }
-
-        }
-    });
-    
-    levelActive[cacheKey] = true;
-    selection.removeAllRanges();
-    UpdateHighlightButtonState(document.querySelector(".level-custom"), cacheKey);
-}
-
-function ToggleCustomHighlightVisibility(pageContainer, button)
-{
-    const cacheKey = `${currentPageIndex}-custom`;
-
-    if (levelHighlights[cacheKey] === undefined || levelHighlights[cacheKey].size === 0) {
-        return;
-    }
-
-    levelActive[cacheKey] = !levelActive[cacheKey];
-    const isActive = levelActive[cacheKey];
-    const indexSet = levelHighlights[cacheKey];
-
-    const activePaper = pageContainer.querySelectorAll(".paper")[currentPageIndex];
-    const pageContentElement = activePaper.querySelector(".page-content");
-    const pageTokens = pageContentElement.querySelectorAll(".token");
-
-    pageTokens.forEach(span => {
-        const idx = parseInt(span.dataset.index, 10);
-        if (indexSet.has(idx)) {
-            span.classList.toggle("highlight-custom", isActive);
-        }
-    });
-
-    UpdateHighlightButtonState(button, cacheKey);
-}
-
