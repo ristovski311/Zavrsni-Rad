@@ -68,6 +68,19 @@ export class HighlightManager
         return false;
     }
 
+    activateLevelForPage(level,page)
+    {
+        const lvl = this.levels.find(l => l.level === level);
+        if(!lvl)
+            return;
+
+        if(page in this.activeLevelsByPage)
+        {
+            const activeLevels = this.activeLevelsByPage[page];
+            if(!activeLevels.includes(level))
+                activeLevels.push(level);
+        }
+    }
 
     toggleLevelForPage(level, page)
     {

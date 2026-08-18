@@ -20,7 +20,6 @@ export function setActiveCustomLevel(level)
         activeCustomLevel = null;
     else
         activeCustomLevel = level;
-    console.log(`Current active: ${activeCustomLevel}`)
 }
 
 export function setCurrentTheme(theme)

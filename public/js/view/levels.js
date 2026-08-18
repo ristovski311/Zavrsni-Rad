@@ -1,6 +1,6 @@
 import { activeCustomLevel, app_state, currentPageIndex, isCustomHighlightActive, pageContainer,setActiveCustomLevel } from "../state/app_state.js";
 import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
-import { Highlight } from "./highlighting.js";
+import { Highlight, ToggleHighlightVisibility } from "./highlighting.js";
 
 export async function DrawLevelsFAB(container)
 {
@@ -182,7 +182,7 @@ function DrawLevelButton(container, level, type, percent)
     else
     {
         levelButton.addEventListener("click", async (e) => {
-            ToggleCustomHighlightVisibility(pageContainer, levelButton, level);
+            ToggleHighlightVisibility(pageContainer, level, levelButton);
         })
     }
 
@@ -206,7 +206,7 @@ function DrawLevelButton(container, level, type, percent)
 
 // Custom highlight obrada
 
-function ToggleCustomHighlight(level)
+export function ToggleCustomHighlight(level)
 {
     setActiveCustomLevel(level);
 
@@ -220,12 +220,10 @@ function ToggleCustomHighlight(level)
     const res = isCustomHighlightActive();
     if(res)
     {
-        console.log(res)        
         activePage.addEventListener("mouseup", HandleCustomHighlightSelection);
     }
     else
     {
-        console.log("Eve me ovde")
         activePage.removeEventListener("mouseup", HandleCustomHighlightSelection);
         window.getSelection().removeAllRanges();
     }
@@ -241,6 +239,7 @@ function HandleCustomHighlightSelection()
     const range = selection.getRangeAt(0);
     const activePage = document.querySelector(".active-page");
     const tokens = activePage.querySelectorAll(".token");
+    const localIdxOffset = tokens[0].dataset.index;
 
     // const cacheKey = `${currentPageIndex}-custom`;
     // if (!levelHighlights[cacheKey]) 
@@ -248,7 +247,7 @@ function HandleCustomHighlightSelection()
 
     tokens.forEach(span => {
         if (range.intersectsNode(span)) {
-            const idx = parseInt(span.dataset.index, 10);
+            const idx = parseInt(span.dataset.index, 10) - localIdxOffset;
 
             if (app_state.toggleIndexForCustomHighlight(level, currentPageIndex, idx))
                 span.classList.remove(`highlight-${level}`);
@@ -257,26 +256,26 @@ function HandleCustomHighlightSelection()
         }
     });
     
-    app_state.toggleLevelForPage(level, currentPageIndex);
+    app_state.activateLevelForPage(level, currentPageIndex);
     selection.removeAllRanges();
     UpdateHighlightButtonState(document.querySelector(`.highlight-level-${level}-btn`), level, currentPageIndex);
 }
 
-function ToggleCustomHighlightVisibility(pageContainer, button, level)
-{
-    app_state.toggleLevelForPage(level, currentPageIndex);
-        const isActive = app_state.isLevelActiveForPage(level, currentPageIndex);
-        const indexSet = new Set(app_state.getIndicesForPageAndLevel(level, currentPageIndex));
+// function ToggleCustomHighlightVisibility(pageContainer, button, level)
+// {
+//     app_state.toggleLevelForPage(level, currentPageIndex);
+//         const isActive = app_state.isLevelActiveForPage(level, currentPageIndex);
+//         const indexSet = new Set(app_state.getIndicesForPageAndLevel(level, currentPageIndex));
 
-        const pageTokens = pageContentElement.querySelectorAll(".token");
-        pageTokens.forEach((span, localIdx) => {
-            if (indexSet.has(localIdx)) {
-                span.classList.toggle(`highlight-${level}`, isActive);
-            }
-        }); 
+//         const pageTokens = pageContentElement.querySelectorAll(".token");
+//         pageTokens.forEach((span, localIdx) => {
+//             if (indexSet.has(localIdx)) {
+//                 span.classList.toggle(`highlight-${level}`, isActive);
+//             }
+//         }); 
 
-    UpdateHighlightButtonState(button, level, currentPageIndex);
-}
+//     UpdateHighlightButtonState(button, level, currentPageIndex);
+// }
 
 
 // Update dugmica
@@ -284,7 +283,7 @@ function ToggleCustomHighlightVisibility(pageContainer, button, level)
 export function UpdateHighlightButtonState(button, level, page)
 {
     button.classList.remove("highlight-unhighlighted", "highlight-inactive", "highlight-active");
-
+    
     const highlighted = app_state.isPageHighlightedForLevel(level, page)
 
     if(!highlighted)
@@ -308,7 +307,7 @@ export function RefreshAllButtonStates(container)
     });
 }
 
-function RefreshAllEditButtonStates(container)
+export function RefreshAllEditButtonStates(container)
 {
     const highlightEditBtns = container.querySelectorAll(".highlight-edit-btn");
     highlightEditBtns.forEach((btn, i) => {

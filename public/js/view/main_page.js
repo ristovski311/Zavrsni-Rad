@@ -3,9 +3,9 @@ import { app_state, createState, loadState, saveState, allPages, currentPageInde
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
 import { OpenPageSelectionModal, RenderPages, ShowPage } from "./page_rendering.js";
-import { DrawLevelsFAB, RenderLevelButtons } from "./levels.js";
+import { DrawLevelsFAB, RenderLevelButtons, ToggleCustomHighlight } from "./levels.js";
 import { Highlight, RenderHighlights } from "./highlighting.js";
-import { UpdateHighlightButtonState, RefreshAllButtonStates } from "./levels.js";
+import { UpdateHighlightButtonState, RefreshAllButtonStates,RefreshAllEditButtonStates } from "./levels.js";
 import { OpenInformationModal, OpenThemeSelectModal, ResolveLocalResources } from "../document/utility.js";
 
 let customHighlightOn = false;
@@ -99,6 +99,8 @@ export async function DrawMainPage(container)
     })
     prevBtn.addEventListener("click", () => {
         if (currentPageIndex > 0) {
+            ToggleCustomHighlight(activeCustomLevel);
+            RefreshAllEditButtonStates(mainContainer);
             ShowPage(pageRendererContainer, currentPageIndex - 1);
             pageIndicator.textContent = `${currentPageIndex + 1} / ${allPages.length}`;
             RefreshAllButtonStates(mainContainer);
@@ -106,6 +108,8 @@ export async function DrawMainPage(container)
     });
     nextBtn.addEventListener("click", () => {
         if (currentPageIndex < allPages.length - 1) {
+            ToggleCustomHighlight(activeCustomLevel);
+            RefreshAllEditButtonStates(mainContainer);
             ShowPage(pageRendererContainer, currentPageIndex + 1);
             pageIndicator.textContent = `${currentPageIndex + 1} / ${allPages.length}`;
             RefreshAllButtonStates(mainContainer);
