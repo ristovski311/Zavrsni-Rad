@@ -34,29 +34,6 @@ export async function DrawLevelsFAB(container)
     })
     if(app_state)
         RenderLevelButtons(highlightLevelsContainer);
-    // if(app_state)
-    //     RenderLevelButtons(highlightLevelsContainer);
-
-    // for(let i = 1; i <= 26; i++)
-    // {
-    //     const hightlightButton = DrawElement(highlightLevelsContainer, "button", ["highlight-btn", `level-${i}`, "highlight-unhighlighted"], `Level ${i}`)
-    // }
-    
-    // const customHighlightBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom`, "highlight-unhighlighted"], `Custom`)
-    // const customHighlightActiveBtn = DrawElement(highlightLevelsContainer, "button", ["highlight-btn-custom", `level-custom-active`, "highlight-custom-off"], `Off`)
-
-    // customHighlightActiveBtn.addEventListener("click", () => {
-    //     ToggleCustomHighlight();
-
-    //     const turningOn = customHighlightOn;
-    //     customHighlightActiveBtn.classList.toggle("highlight-custom-on", turningOn);
-    //     customHighlightActiveBtn.classList.toggle("highlight-custom-off", !turningOn);
-    //     customHighlightActiveBtn.textContent = turningOn ? "On" : "Off";      
-    // });
-
-    // customHighlightBtn.addEventListener("click", () => {
-    //     ToggleCustomHighlightVisibility(pageContainer, customHighlightBtn);
-    // })
 }
 
 function OpenCreateLevelModal(container)
@@ -241,10 +218,6 @@ function HandleCustomHighlightSelection()
     const tokens = activePage.querySelectorAll(".token");
     const localIdxOffset = tokens[0].dataset.index;
 
-    // const cacheKey = `${currentPageIndex}-custom`;
-    // if (!levelHighlights[cacheKey]) 
-    //     levelHighlights[cacheKey] = new Set();
-
     tokens.forEach(span => {
         if (range.intersectsNode(span)) {
             const idx = parseInt(span.dataset.index, 10) - localIdxOffset;
@@ -260,23 +233,6 @@ function HandleCustomHighlightSelection()
     selection.removeAllRanges();
     UpdateHighlightButtonState(document.querySelector(`.highlight-level-${level}-btn`), level, currentPageIndex);
 }
-
-// function ToggleCustomHighlightVisibility(pageContainer, button, level)
-// {
-//     app_state.toggleLevelForPage(level, currentPageIndex);
-//         const isActive = app_state.isLevelActiveForPage(level, currentPageIndex);
-//         const indexSet = new Set(app_state.getIndicesForPageAndLevel(level, currentPageIndex));
-
-//         const pageTokens = pageContentElement.querySelectorAll(".token");
-//         pageTokens.forEach((span, localIdx) => {
-//             if (indexSet.has(localIdx)) {
-//                 span.classList.toggle(`highlight-${level}`, isActive);
-//             }
-//         }); 
-
-//     UpdateHighlightButtonState(button, level, currentPageIndex);
-// }
-
 
 // Update dugmica
 

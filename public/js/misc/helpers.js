@@ -60,3 +60,19 @@ export function ShowYesNoDialog(text, yesText, noText) {
     )
    
 }
+
+export function AddShortcut(container, keys, callback)
+{
+    container.addEventListener("keydown", (event) => {
+        if(
+            event.ctrlKey === !!keys.ctrl &&
+            event.shiftKey === !!keys.shift &&
+            event.altKey === !!keys.alt &&
+            event.key.toLowerCase() === keys.key.toLowerCase()
+        )
+        {
+            event.preventDefault();
+            callback();
+        }
+    })
+}

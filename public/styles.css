@@ -19,6 +19,8 @@
     --color-on-off-text: white;
     --text-selection: white;
 
+    --pre_color: #b6aa91;
+
     --back_1: #2f3e46;
     --back_2: #354f52;
     --back_3: #b8995b;
@@ -47,6 +49,8 @@
     --color_off: #c41b1b;
     --color-on-off-text: white;
     --text-selection: white;
+
+    --pre_color: #b68d8d;
 
     --back_1: #b9b9b9;
     --back_2: #727272;
@@ -77,6 +81,8 @@
     --color-on-off-text: white;
     --text-selection: black;
 
+    --pre_color: #e6d1ac;
+    
     --back_1: #111827;
     --back_2: #1f2937;
     --back_3: #374151;
@@ -105,6 +111,8 @@
     --color_off: #9c3040;
     --color-on-off-text: white;
     --text-selection: black;
+
+    --pre_color: #cec28d;
 
     --back_1: #1e1b2e;
     --back_2: #312e46;
@@ -680,8 +688,8 @@ pre {
     font-family: 'Courier New', Courier, monospace;
     text-align: start;
     font-size: medium;
-    background: var(--ui-background); 
-    color: var(--ui-text); 
+    background: var(--pre_color); 
+    color: black; 
     padding: 16px; 
     border-radius: 8px; 
     overflow-x: auto;
@@ -732,6 +740,7 @@ pre {
     align-items: center;
     font-family: 'HeaderFont';
     user-select: none;
+    min-width: 30%;
 }
 
 .modal-text-container
@@ -842,6 +851,94 @@ pre {
     outline: none;
 }
 
+/* Modal za testiranje */
+
+.test-container
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: start;
+    align-items: center;
+    padding: 12px;
+    width: 100%;
+}
+
+.question-container
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: start;
+    align-items: center;
+    padding: 8px;
+    width: 100%;
+}
+
+.question-text
+{
+    width: 100%;
+    text-align: center;
+    background-color: var(--pre_color);
+    border-radius: 2px;
+    color: black;
+    padding: 2px;
+}
+
+.answers-container
+{
+    min-width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: start;
+    align-items: center;
+    padding: 4px;
+}
+
+.test-radio
+{
+    position:absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.custom-test-radio
+{
+    padding: 2px;
+    width: 100%;
+    border-radius: 4px;
+    background-color: var(--color_inactive);
+    color: var(--color_inactive_text);
+}
+
+.custom-test-radio:hover
+{
+    transform: scale(105%);
+    transition: scale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+}
+
+.test-points
+{
+    background-color: var(--color_5);
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    padding: 4px;
+    font-size: 120%;
+}
+
+.answer-correct
+{
+    background-color: var(--color_on);
+}
+
+.answer-incorrect
+{
+    background-color: var(--color_off);
+}
 
 /* Overlay za loading */
 .overlay{

@@ -1,4 +1,4 @@
-import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog } from "../misc/helpers.js";
+import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog, AddShortcut } from "../misc/helpers.js";
 import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel, setActiveCustomLevel, isCustomHighlightActive } from "../state/app_state.js";
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
@@ -7,6 +7,7 @@ import { DrawLevelsFAB, RenderLevelButtons, ToggleCustomHighlight } from "./leve
 import { Highlight, RenderHighlights } from "./highlighting.js";
 import { UpdateHighlightButtonState, RefreshAllButtonStates,RefreshAllEditButtonStates } from "./levels.js";
 import { OpenInformationModal, OpenThemeSelectModal, ResolveLocalResources } from "../document/utility.js";
+import { OpenTestingModal } from "../testing/test.js";
 
 let customHighlightOn = false;
 
@@ -28,6 +29,18 @@ export async function DrawMainPage(container)
     // Customization container
     const customizationContainer = DrawElement(optionsToolbar, "div", ["customization-container"])
     
+    // Testing - sakrivena opcija dok se ne pritisne shortcut SHIFT + T
+    const testButton = DrawElement(customizationContainer, "button", ["testing-button", "toolbar-element", "hidden"], "Run a test");
+    testButton.addEventListener("click", () => {
+        OpenTestingModal(mainContainer);
+    });
+
+    //Shortcut SHIFT + T
+    AddShortcut(document, {shift: true, key: "t"}, () => {
+        if(app_state)
+            testButton.classList.remove("hidden");
+    });
+
     // About app
     const aboutButton = DrawElement(customizationContainer, "button", ["about-button", "toolbar-element"], "About app");
     aboutButton.addEventListener("click", () => {

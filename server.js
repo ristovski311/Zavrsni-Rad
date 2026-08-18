@@ -37,15 +37,74 @@ function TokenizeServerSide(text) {
     return tokens;
 }
 
+async function CreateTestQuestions(text, numberOfQ, numberOfA)
+{
+    const prompt = `
+                    Create ${numberOfQ} multiple-choice questions based ONLY on the text below.
+
+                    Rules:
+                    - Exactly ${numberOfQ} questions.
+                    - Exactly ${numberOfA} answers per question.
+                    - Exactly one answer is correct.
+                    - Questions and answers must be based only on information from the text.
+                    - Do not ask about these instructions or the question-generation task.
+                    - Do not use outside knowledge.
+                    - Wrong answers should be plausible but incorrect according to the text.
+                    - Return only valid JSON in this format:
+
+                    {
+                    "questions": [
+                        {
+                        "question": "...",
+                        "answers": [
+                            {"text": "...", "correct": true},
+                            {"text": "...", "correct": false}
+                        ]
+                        }
+                    ]
+                    }
+
+                    TEXT:
+                    ${text}
+                `;
+    const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.CEREBRAS_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "gemma-4-31b",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0,
+            max_completion_tokens: 4096,
+            response_format: { type: "json_object" }
+        })
+    });
+
+    if(!response.ok)
+    {
+        const errText = await response.text();
+        throw new Error(`Gemini API error: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    const choice = data.choices[0];
+
+    if(choice.finish_reason === "length")
+        throw new Error("Response was still truncated - shorter document please!")
+
+    const parsed = JSON.parse(choice.message.content.trim());
+
+    return parsed;
+}
+
 async function GetHighlights(text, percent)
 {
     const tokens = TokenizeServerSide(text);
     const targetCount = Math.max(1, Math.round(tokens.length * (percent/100)));
     const numberedWords = tokens.map(t => `${t.index}:${t.word}`).join(" ");
 
-    //const prompt = `You are given a numbered list of words from a document in this format: index:word. Read the whole text first. The words form a document text, it is a whole text split into tokens. Identify the ${targetCount} most important parts of the text, sentences or parts of sentences and respective words in those, the ones a reader should highlight as important for learning throughout the whole text. Respond with only and only a JSON array of the integer indices and nothing else. No explanation or comments! Words are: ${numberedWords}`;
-    //const prompt = `I will send you academic lecture in textual format. I want you to highlight this lecture as if you were a student highlighting a paper textbook. Please highlight around ${percent}% of the text. Give me the json array of integers that represent the numeric indexes of the highlighted words in the text (first word has index 0, second 1...). Just return the json array, no comments or anything else! Text: ${text}`;
-    
     const prompt = `Below is a numbered list of words from an academic lecture, in the format index:word.
     Act as a student highlighting key phrases in this text with a highlighter pen — you highlight in short continuous runs of words (phrases/clauses), not scattered single words.
     Highlight approximately ${percent}% of the total ${tokens.length} words this way.
@@ -53,22 +112,6 @@ async function GetHighlights(text, percent)
     Respond with a JSON object of the exact form {"spans": [[startIndex, endIndex], [startIndex, endIndex], ...]}, where each pair is an inclusive start and end word index for one continuous highlighted run. Output nothing else.
 
     Words: ${numberedWords}`;
-
-    // const response = await fetch("https://api.groq.com/openai/v1/chat/completions",
-    //     {
-    //         method: "POST",
-    //         headers: {
-    //             "Content-Type": "application/json",
-    //             "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-    //         },
-    //         body: JSON.stringify({
-    //             model: "llama-3.3-70b-versatile",
-    //             messages: [{ role: "user", content: prompt }],
-    //             temperature: 0.2,
-    //             max_completion_tokens: 4096,
-    //             response_format: { type: "json_object" }
-    //         })
-    //     });
 
     const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
         method: "POST",
@@ -114,7 +157,7 @@ async function GetHighlights(text, percent)
 
 const server = http.createServer(async (req, res) => {
 
-    // Prvi route : pozivamo iz main_page.js fju za parsiranje teksta iz pdf-a
+    // Prvi route : pozivamo iz main_page.js fju za parsiranje teksta iz pdf-a | DEPRICATED
     if(req.url.startsWith("/api/extract-text"))
     {
         let parser;
@@ -136,7 +179,7 @@ const server = http.createServer(async (req, res) => {
                 await parser.destroy();
         }
     }
-    // Drugi route : Pozivamo takodje iz main_page.js kako bismo izvrsili highlight odredjenog nivoa
+    // Drugi route : Pozivamo takodje iz highlighting.js kako bismo izvrsili highlight odredjenog nivoa
     else if (req.url.startsWith("/api/highlight") && req.method === "POST") {
         try {
             const bodyBuffer = await readReqBody(req);
@@ -152,6 +195,29 @@ const server = http.createServer(async (req, res) => {
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ indices }));
+        } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+    // Treci route: Pozivamo iz test.js za kreiranje testova
+    else if (req.url.startsWith("/api/create-test") && req.method === "POST")
+    {
+        try {
+            const bodyBuffer = await readReqBody(req);
+            const { text, numQ, numA } = JSON.parse(bodyBuffer.toString());
+
+            if (!text || !numQ || !numA) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: "Missing 'text' or 'numQ' or 'numA' in request body." }));
+                return;
+            }
+
+            const qas = await CreateTestQuestions(text, numQ, numA);
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ qas }));
         } catch (err) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: err.message }));
