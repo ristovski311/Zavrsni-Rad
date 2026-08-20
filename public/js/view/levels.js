@@ -1,6 +1,6 @@
-import { activeCustomLevel, app_state, currentPageIndex, isCustomHighlightActive, pageContainer,setActiveCustomLevel } from "../state/app_state.js";
+import { activeCustomLevel, app_state, currentPageIndex, getHighlightColor, isCustomHighlightActive, pageContainer,setActiveCustomLevel, setHighlightColor } from "../state/app_state.js";
 import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
-import { Highlight, ToggleHighlightVisibility } from "./highlighting.js";
+import { Highlight, ToggleHighlightVisibility,HandleCustomHighlightSelection } from "./highlighting.js";
 
 export async function DrawLevelsFAB(container)
 {
@@ -106,12 +106,10 @@ function OpenCreateLevelModal(container)
             const modalBtnContainer = DrawElement(modalContainer, "div", ["modal-btn-container"]);
             const modalBtnConfirm = DrawElement(modalBtnContainer, "button", ["modal-btn-confirm"], "Create");
             const modalBtnCancel = DrawElement(modalBtnContainer, "button", ["modal-btn-cancel"], "Cancel");
-        
 
             modalBtnConfirm.addEventListener("click", () =>
             {
                 app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null)
-                
                 overlay.remove();
                 resolve(true);
             })
@@ -127,6 +125,64 @@ function OpenCreateLevelModal(container)
     )
 }
 
+/* Slider-i - kasnije implementirati
+
+            const colorPickerContainer = DrawElement(modalContainer, "div", ["color-picker-container"]);
+            const slidersContainer = DrawElement(colorPickerContainer, "div", ["color-sliders-container"]);
+            const previewContainer = DrawElement(colorPickerContainer, "div", ["color-preview-container"], "lorem impsum");
+
+            const hue = CreateColorSlider("H", 0, 360, 180);
+            const saturation = CreateColorSlider("S", 0, 100, 70);
+            const lightness = CreateColorSlider("L", 0, 100, 70);
+
+            slidersContainer.appendChild(hue.container);
+            slidersContainer.appendChild(saturation.container);
+            slidersContainer.appendChild(lightness.container);
+
+            function UpdatePreview() {
+                const h = hue.slider.value;
+                const s = saturation.slider.value;
+                const l = lightness.slider.value;
+
+                const color = `hsl(${h}, ${s}%, ${l}%)`;
+
+                previewContainer.style.backgroundColor = color;
+
+                hue.labelElement.textContent = `H: ${h}`;
+                saturation.labelElement.textContent = `S: ${s}%`;
+                lightness.labelElement.textContent = `L: ${l}%`;
+            }
+
+            hue.slider.addEventListener("input", UpdatePreview);
+            saturation.slider.addEventListener("input", UpdatePreview);
+            lightness.slider.addEventListener("input", UpdatePreview);
+
+            UpdatePreview();
+
+function CreateColorSlider(label, min, max, value) {
+
+    const container = document.createElement("div");
+    container.className = "color-slider";
+
+    const labelElement = document.createElement("label");
+    labelElement.textContent = `${label}: ${value}`;
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = min;
+    slider.max = max;
+    slider.value = value;
+
+    container.appendChild(labelElement);
+    container.appendChild(slider);
+
+    return {
+        container,
+        slider,
+        labelElement
+    };
+} */
+
 export function RenderLevelButtons(container)
 {
     container.innerHTML = "";
@@ -141,6 +197,9 @@ export function RenderLevelButtons(container)
 function DrawLevelButton(container, level, type, percent)
 {
     let btnContainer = DrawElement(container, "div", ["highlight-level-btn-container"]);
+    const clr = getHighlightColor(level);
+    console.log(clr)
+    btnContainer.style.backgroundColor = clr;
     let levelButton = DrawElement(btnContainer, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
     levelButton.dataset.level = level;
     if(type === "ai")
@@ -204,34 +263,6 @@ export function ToggleCustomHighlight(level)
         activePage.removeEventListener("mouseup", HandleCustomHighlightSelection);
         window.getSelection().removeAllRanges();
     }
-}
-
-function HandleCustomHighlightSelection()
-{
-    const level = activeCustomLevel;
-    const selection = window.getSelection();
-    if (selection.isCollapsed || selection.rangeCount === 0) 
-        return;
-
-    const range = selection.getRangeAt(0);
-    const activePage = document.querySelector(".active-page");
-    const tokens = activePage.querySelectorAll(".token");
-    const localIdxOffset = tokens[0].dataset.index;
-
-    tokens.forEach(span => {
-        if (range.intersectsNode(span)) {
-            const idx = parseInt(span.dataset.index, 10) - localIdxOffset;
-
-            if (app_state.toggleIndexForCustomHighlight(level, currentPageIndex, idx))
-                span.classList.remove(`highlight-${level}`);
-            else
-                span.classList.add(`highlight-${level}`);
-        }
-    });
-    
-    app_state.activateLevelForPage(level, currentPageIndex);
-    selection.removeAllRanges();
-    UpdateHighlightButtonState(document.querySelector(`.highlight-level-${level}-btn`), level, currentPageIndex);
 }
 
 // Update dugmica

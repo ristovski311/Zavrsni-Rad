@@ -1,7 +1,7 @@
 import {setAllPages, setCurrentPageIndex, currentPageIndex, allPages} from '../state/app_state.js'
 import { DrawElement } from '../misc/helpers.js';
 
-export function RenderPages(pageViewer, pages) {
+export async function RenderPages(pageViewer, pages) {
     document.querySelector(".page-nav-container").classList.remove("hidden");
     
     pageViewer.innerHTML = "";

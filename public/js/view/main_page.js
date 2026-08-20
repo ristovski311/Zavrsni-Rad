@@ -1,4 +1,4 @@
-import { DrawElement, GetFileExtension, ShowLoadingOverlay, ShowYesNoDialog, AddShortcut } from "../misc/helpers.js";
+import { DrawElement, GetFileExtension, ShowYesNoDialog, AddShortcut, ShowLoadingOverlay } from "../misc/helpers.js";
 import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel, setActiveCustomLevel, isCustomHighlightActive } from "../state/app_state.js";
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
@@ -211,7 +211,14 @@ export async function DrawMainPage(container)
             const urls = ResolveLocalResources(doc, contentFile, files);
             setCurrentObjectURLs(urls);
 
-            const articleElement = doc.querySelector("#mw-content-text") || doc.body;
+            // const articleElement = doc.querySelector("#mw-content-text") || doc.body;
+            const articleElement = doc.querySelector("#mw-content-text")
+                                || doc.querySelector("article")
+                                || doc.querySelector("main")
+                                || doc.querySelector(".entry-content")   // česta WordPress klasa (baš kao ovaj sajt)
+                                || doc.querySelector(".post-content")
+                                || doc.querySelector("#content")
+                                || doc.body;
             articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
             
             // Tokenizacija html dokumenta dobijenog parsiranjem .md
@@ -220,13 +227,13 @@ export async function DrawMainPage(container)
             TokenizeDOM(tempContainer);
             
             // Rezultat je lista 
-            const pages = PaginateContent(tempContainer);
+            const pages = await PaginateContent(tempContainer);
             
             //Kreiranje novog stanja
             createState(fileName, pages.length)
             
             //Rendering stranica
-            RenderPages(pageContainer, pages);
+            await RenderPages(pageContainer, pages);
             pageIndicator.textContent = `1 / ${pages.length}`
             
             // Dugmici za stanja

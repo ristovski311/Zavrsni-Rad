@@ -1,4 +1,10 @@
 
+span {
+    padding: 1px;
+    background-blend-mode: multiply;
+    background-image: none;
+}
+
 /* Teme */
 
 :root,
@@ -44,7 +50,7 @@
     --color_ative: #c23333;
     --color_inactive: #ad6363;
     --color_active_text: white;
-    --color_inactive_text: black;
+    --color_inactive_text: white;
     --color_on: #118f3f;
     --color_off: #c41b1b;
     --color-on-off-text: white;
@@ -74,8 +80,8 @@
 
     --color_ative: #f59e0b;
     --color_inactive: #f3c16a;
-    --color_active_text: black;
-    --color_inactive_text: black;
+    --color_active_text: white;
+    --color_inactive_text: white;
     --color_on: #0b7432;
     --color_off: #720e0e;
     --color-on-off-text: white;
@@ -105,8 +111,8 @@
 
     --color_ative: #dab616;
     --color_inactive: #ecdea0;
-    --color_active_text: black;
-    --color_inactive_text: black;
+    --color_active_text: white;
+    --color_inactive_text: white;
     --color_on: #1b8860;
     --color_off: #9c3040;
     --color-on-off-text: white;
@@ -398,12 +404,13 @@ p {
     transition: max-height 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
     order: 2;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     overflow-y: scroll;
     overflow-x: hidden;
     background-color: var(--back_3);
     max-height: 60vh;
     width: 100%;
+    gap: 3px;
 }
 
 .no-height
@@ -416,7 +423,15 @@ p {
     width: 100%;
     display: flex;
     flex-direction: row;
-    padding: 2px;
+    border-radius: 6px;
+    padding: 0 0 0 12px;
+}
+
+.highlight-level-btn-color
+{
+    min-width: 10%;
+    border-radius: 2px 0 0 2px;
+    height: 100%;
 }
 
 .highlight-level-btn
@@ -678,6 +693,17 @@ img {
     min-width: 4%;
 }
 
+.token
+{
+    background-repeat: no-repeat;
+    background-position: center;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding: 2px;
+}
+
 .token-highlight-mode /*Prilikom custom (rucnog) highlight-a*/
 {
     user-select:all;
@@ -741,6 +767,8 @@ pre {
     font-family: 'HeaderFont';
     user-select: none;
     min-width: 30%;
+    max-height: 90%;
+    overflow: scroll;
 }
 
 .modal-text-container
@@ -910,8 +938,9 @@ pre {
     padding: 2px;
     width: 100%;
     border-radius: 4px;
-    background-color: var(--color_inactive);
-    color: var(--color_inactive_text);
+    border: 2px solid var(--ui-border);
+    background-color: white;
+    color: black;
 }
 
 .custom-test-radio:hover
@@ -1015,4 +1044,71 @@ pre {
     background-color: var(--color_off);
     font-weight: bold;
     color: var(--color-on-off-text);
+}
+
+/* Ostali elementi na stranicama */
+
+a
+{
+    pointer-events: none;
+    color: black;
+    text-decoration: none;
+}
+
+ol, ul {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: start;
+    list-style-type: none;
+}
+
+video
+{
+    max-width: 100%;
+    height: auto;
+}
+
+.page-content * {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Color picker */
+
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.color-sliders-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 250px;
+}
+
+.color-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.color-slider label {
+    font-size: 14px;
+}
+
+.color-slider input[type="range"] {
+    width: 100%;
+}
+
+.color-preview-container {
+    width: 100px;
+    height: 50px;
+    border-radius: 8px;
+    border: 12px solid white;
+    color: black;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    text-align: center;
 }

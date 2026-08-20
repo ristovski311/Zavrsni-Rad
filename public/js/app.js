@@ -17,10 +17,10 @@ async function RunApp()
     );
     
     // Kako bismo izbegli gubitak progress-a
-    // window.addEventListener("beforeunload", (e) => {
-    //     e.preventDefault();
-    //     e.returnValue = "";
-    // });
+    window.addEventListener("beforeunload", (e) => {
+        e.preventDefault();
+        e.returnValue = "";
+    });
 
     const rootContainer = document.querySelector(".root");
     await DrawMainPage(rootContainer);

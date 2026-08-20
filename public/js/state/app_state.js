@@ -1,4 +1,5 @@
 import { HighlightManager } from "../model/highlight_manager.js";
+import { CreateHighlightColorsForLevels } from "../view/highlighting.js";
 
 export let app_state;
 export let allPages = [];
@@ -7,7 +8,22 @@ export let pageContainer;
 export let currentObjectURLs = [];
 export let activeCustomLevel = null;
 export let currentTheme = localStorage.getItem("theme") ?? "default";
+export let testNumQ = 4;
+export let testNumA = 3;
+export let highlightColors = {};
 loadCurrentTheme();    
+CreateHighlightColorsForLevels();
+console.log(highlightColors);
+
+export function setHighlightColor(level, color)
+{
+    highlightColors[level] = color;
+}
+
+export function getHighlightColor(level)
+{
+    return highlightColors[level];
+}
 
 export function isCustomHighlightActive()
 {
@@ -91,26 +107,3 @@ export function saveState()
 
     URL.revokeObjectURL(url);
 }
-
-function CreateHighlightColorsForLevels()
-{
-    const maxLevels = 30;
-    const goldenAngle = 137.5;
-    
-    for(let level = 1; level <= maxLevels; level++)
-    {
-        const hue = Math.round((level*goldenAngle) % 360) // Logika je takva da podrazumevamo da nece biti vise od 30 levela (iako je i to mnogo)
-        const dynamicColor = `hsl(${hue}, 70%, 70%)`
-        const style = document.createElement('style');
-        style.innerHTML = `
-            .highlight-${level}
-            {
-                background-color: ${dynamicColor};
-                color: #000000;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-}
-
-CreateHighlightColorsForLevels();

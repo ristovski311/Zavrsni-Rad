@@ -1,5 +1,5 @@
 import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
-import { pageContainer } from "../state/app_state.js";
+import { pageContainer, testNumA, testNumQ } from "../state/app_state.js";
 
 
 export function OpenTestingModal(container)
@@ -16,11 +16,11 @@ export function OpenTestingModal(container)
             const testContainer = DrawElement(modalContainer, "div", ["test-container"]);
 
             const createTestButton = DrawElement(testContainer, "button", ["modal-btn-confirm"], "Create a test!");
-            createTestButton.addEventListener("click", () => {
+            createTestButton.addEventListener("click", async () => {
                 createTestButton.classList.toggle("hidden", true);
                 const hideOverlay = ShowLoadingOverlay();
                 try{
-                    DrawTest(testContainer);
+                    await DrawTest(testContainer);
                 }
                 finally{
                     hideOverlay();
@@ -107,7 +107,7 @@ async function DrawTest(container)
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({text: pageContentText, numQ: "3", numA: "3"})
+                body: JSON.stringify({text: pageContentText, numQ: `${testNumQ}`, numA: `${testNumA}`})
             });
     
     if(!response.ok)
