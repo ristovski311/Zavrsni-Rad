@@ -1,6 +1,7 @@
-import { activeCustomLevel, app_state, currentPageIndex, getHighlightColor, isCustomHighlightActive, pageContainer,setActiveCustomLevel, setHighlightColor } from "../state/app_state.js";
+import { activeCustomLevel, app_state, currentPageIndex, getHighlightColor, isCustomHighlightActive, maxHighlightLevels, pageContainer,setActiveCustomLevel } from "../state/app_state.js";
 import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
 import { Highlight, ToggleHighlightVisibility,HandleCustomHighlightSelection } from "./highlighting.js";
+import { OpenInformationModal } from "../document/utility.js";
 
 export async function DrawLevelsFAB(container)
 {
@@ -25,11 +26,19 @@ export async function DrawLevelsFAB(container)
     createLevelBtn.addEventListener("click", async () => {
         if(app_state)
         {
-            const res = await OpenCreateLevelModal(container);
-            if(res)
-                RenderLevelButtons(highlightLevelsContainer);
-            if(highlightLevelsContainer.classList.contains("no-height"))
-                expandLevelsBtn.click();
+            if(app_state.getCurrentLevelCount() === maxHighlightLevels)
+            {
+                await OpenInformationModal(container, "We currently support only 6 levels of highlights.");
+                resolve();
+            }
+            else
+            {
+                const res = await OpenCreateLevelModal(container);
+                if(res)
+                    RenderLevelButtons(highlightLevelsContainer);
+                if(highlightLevelsContainer.classList.contains("no-height"))
+                    expandLevelsBtn.click();
+            }
         }
     })
     if(app_state)

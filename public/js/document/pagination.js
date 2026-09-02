@@ -3,42 +3,6 @@
 // Funkcija koja sluzi za paginaciju html dokumenta.
 // Cilj je da se na papiru A4 formata (na stranici) prikazu
 // Elementi postojeceg html dokumenta bez overflow-a
-// export function PaginateContent(sourceContainer) {
-//     const pages = [];
-//     let currentPageContent = document.createElement("div");
-//     currentPageContent.classList.add("page-content");
-
-//     // Privremeni "papir" wrapper, isti kao pravi, koristi se samo za merenje
-//     const measuringPaper = document.createElement("div");
-//     measuringPaper.classList.add("paper");
-//     measuringPaper.style.position = "absolute";
-//     measuringPaper.style.visibility = "hidden";
-//     measuringPaper.style.display = "block"; // .paper ima display:none dok nije .active-page
-//     document.body.appendChild(measuringPaper);
-
-//     const blocks = Array.from(sourceContainer.children);
-
-//     for (const block of blocks) {
-//         currentPageContent.appendChild(block);
-
-//         measuringPaper.appendChild(currentPageContent);
-//         const overflowing = currentPageContent.scrollHeight > currentPageContent.clientHeight;
-//         measuringPaper.removeChild(currentPageContent);
-
-//         if (overflowing) {
-//             currentPageContent.removeChild(block);
-//             pages.push(currentPageContent);
-
-//             currentPageContent = document.createElement("div"); //Kreiramo sledecu stranicu
-//             currentPageContent.classList.add("page-content");
-//             currentPageContent.appendChild(block);
-//         }
-//     }
-//     pages.push(currentPageContent);
-
-//     document.body.removeChild(measuringPaper); // ocisti privremenu stranicu za merenje
-//     return pages;
-// }
 
 export async function PaginateContent(sourceContainer) {
     const pages = [];
@@ -81,11 +45,10 @@ export async function PaginateContent(sourceContainer) {
 
         if (!pageWasEmpty) {
             newPage();
-            placeBlock(block); // probaj ponovo na svežoj, praznoj stranici
+            placeBlock(block);
             return;
         }
 
-        // Stranica je prazna, a blok SAM i dalje ne staje
         if (isAtomic(block)) {
             if (block.tagName === "IMG") {
                 ScaleImageToFit(block, measuringPaper);
@@ -98,7 +61,6 @@ export async function PaginateContent(sourceContainer) {
                 });
             }
         } else {
-            // NIJE atomic (div/section wrapper) - "otvori" ga i obradi decu pojedinačno
             const children = Array.from(block.children);
             for (const child of children) {
                 placeBlock(child);
@@ -117,7 +79,6 @@ export async function PaginateContent(sourceContainer) {
 }
 
 function ScaleImageToFit(img, measuringPaper) {
-    // Meri dostupnu visinu unutar page-content (measuringPaper.clientHeight uzima u obzir padding roditelja)
     const testWrapper = document.createElement("div");
     testWrapper.classList.add("page-content");
     testWrapper.appendChild(img);
@@ -133,19 +94,17 @@ function ScaleImageToFit(img, measuringPaper) {
 }
 
 function SplitOversizedBlock(block, measuringPaper) {
-    // Radi samo sa tekstualnim blokovima (p, li, itd.) koji sadrže .token spanove
     const tokens = Array.from(block.querySelectorAll(".token, br"));
     if (tokens.length === 0) return [block]; // nema šta da se deli (npr. prazan blok), vrati kako jeste
 
     const resultBlocks = [];
-    let currentChunk = block.cloneNode(false); // isti tag (p/li/...), bez dece
+    let currentChunk = block.cloneNode(false);
     currentChunk.classList.add("page-content");
 
     for (const node of block.childNodes) {
         currentChunk.appendChild(node.cloneNode(true));
     }
 
-    // Jednostavan pristup: deli po tokenima dok ne stane, koristeći isti overflow test
     let workingBlock = block.cloneNode(false);
     let remainingChildren = Array.from(block.childNodes);
 
@@ -174,7 +133,8 @@ function SplitOversizedBlock(block, measuringPaper) {
 
         pageChunk.classList.remove("page-content");
         resultBlocks.push(pageChunk);
-        if (!addedAny) break; // sigurnosni izlaz - jedan node sam ne staje nikako
+        if (!addedAny) 
+            break;
     }
 
     return resultBlocks;

@@ -1,4 +1,3 @@
-import { loadCurrentTheme } from "./state/app_state.js";
 import { DrawMainPage } from "./view/main_page.js";
 
 async function RunApp()
@@ -19,7 +18,6 @@ async function RunApp()
     // Kako bismo izbegli gubitak progress-a
     window.addEventListener("beforeunload", (e) => {
         e.preventDefault();
-        e.returnValue = "";
     });
 
     const rootContainer = document.querySelector(".root");

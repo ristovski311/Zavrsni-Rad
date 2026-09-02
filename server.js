@@ -156,31 +156,8 @@ async function GetHighlights(text, percent)
 }
 
 const server = http.createServer(async (req, res) => {
-
-    // Prvi route : pozivamo iz main_page.js fju za parsiranje teksta iz pdf-a | DEPRICATED
-    if(req.url.startsWith("/api/extract-text"))
-    {
-        let parser;
-        try
-        {
-            const dataBuffer = await readReqBody(req);
-            
-            parser = new PDFParse({data : dataBuffer});
-            const data = await parser.getText();
-
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({text: data.text}));
-        } catch(err)
-        {
-            res.writeHead(500, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({error: err.message}));
-        } finally{
-            if(parser)
-                await parser.destroy();
-        }
-    }
-    // Drugi route : Pozivamo takodje iz highlighting.js kako bismo izvrsili highlight odredjenog nivoa
-    else if (req.url.startsWith("/api/highlight") && req.method === "POST") {
+    // Pozivamo iz highlighting.js kako bismo izvrsili highlight odredjenog nivoa
+    if (req.url.startsWith("/api/highlight") && req.method === "POST") {
         try {
             const bodyBuffer = await readReqBody(req);
             const { text, percent } = JSON.parse(bodyBuffer.toString());
@@ -201,7 +178,7 @@ const server = http.createServer(async (req, res) => {
         }
         return;
     }
-    // Treci route: Pozivamo iz test.js za kreiranje testova
+    // Pozivamo iz test.js za kreiranje testova
     else if (req.url.startsWith("/api/create-test") && req.method === "POST")
     {
         try {

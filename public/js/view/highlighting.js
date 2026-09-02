@@ -1,4 +1,4 @@
-import { app_state, currentPageIndex, getHighlightColor, setHighlightColor, activeCustomLevel } from "../state/app_state.js";
+import { app_state, currentPageIndex, getHighlightColor, activeCustomLevel, maxHighlightLevels } from "../state/app_state.js";
 import { UpdateHighlightButtonState } from "./levels.js";
 
 export async function Highlight(pageContainer, percent, level, btn)
@@ -147,8 +147,8 @@ function updateSpanBackground(span) {
                 `linear-gradient(${color}, ${color})`
             );
 
-            const height = 100 - (level-1) * 20;
-            const width = 100 - (level * 5);
+            const height = 100 - (level-1) * 15;
+            const width = 100 - (level * 2);
 
             sizes.push(`${width}% ${height}%`);
         });
@@ -161,26 +161,18 @@ function updateSpanBackground(span) {
     span.style.backgroundRepeat = 'no-repeat';
 }
 
-export function CreateHighlightColorsForLevels()
+export function CreateHighlightStyles()
 {
-    const maxLevels = 6;
-    const goldenAngle = 137.5;
-    
-    for (let level = 1; level <= maxLevels; level++)
+    for(let i = 1; i <= maxHighlightLevels; i++)
     {
-        const hue = Math.round((50 + level * goldenAngle) % 360);
-        const dynamicColor = `hsl(${hue} 50% 50% / 0.4)`;
-
-        setHighlightColor(level, dynamicColor);
-        
         const style = document.createElement('style');
 
         style.innerHTML = `
-            .highlight-${level} {
+            .highlight-${i} {
                 color: #000000;
             }
         `;
 
         document.head.appendChild(style);
-    }
+    };
 }

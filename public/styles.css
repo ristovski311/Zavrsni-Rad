@@ -726,31 +726,6 @@ pre {
     display: none;
 }
 
-
-
-/* @media screen and (max-width: 1100px) {
-    .main-container{
-        flex-direction: column;
-        margin-left: 100px;
-        margin-right: 100px;
-    }
-
-    .fields-container, .results-container {
-        width: 100%;
-        padding: 16px;
-    }
-
-    .fields-container, .polje-container, .upit-container, .btn-container, .btn-file-container, .btn-index-container {
-        justify-content: center;
-        align-items: center;
-    }
-
-    .polje-select, .upit-input {
-        width: 25%; 
-    }
-} */
-
-
 /* Modal za kreiranje novog levela */
 
 .modal-container

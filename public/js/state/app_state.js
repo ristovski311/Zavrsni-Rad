@@ -1,5 +1,5 @@
 import { HighlightManager } from "../model/highlight_manager.js";
-import { CreateHighlightColorsForLevels } from "../view/highlighting.js";
+import { CreateHighlightStyles } from "../view/highlighting.js";
 
 export let app_state;
 export let allPages = [];
@@ -8,11 +8,20 @@ export let pageContainer;
 export let currentObjectURLs = [];
 export let activeCustomLevel = null;
 export let currentTheme = localStorage.getItem("theme") ?? "default";
-export let testNumQ = 4;
-export let testNumA = 3;
-export let highlightColors = {};
+export const testNumQ = 3;
+export const testNumA = 3;
+export const maxHighlightLevels = 6;
+export const highlightColors = {
+    1: "hsla(50, 100%, 55%, 0.45)",  // yellow
+    2: "hsla(330, 90%, 65%, 0.40)",  // pink
+    3: "hsla(210, 90%, 60%, 0.38)",  // blue
+    4: "hsla(145, 65%, 50%, 0.38)",  // green
+    5: "hsla(275, 75%, 65%, 0.36)",  // purple
+    6: "hsla(0, 95%, 60%, 0.38)"    // orange
+};
+
 loadCurrentTheme();    
-CreateHighlightColorsForLevels();
+CreateHighlightStyles();
 console.log(highlightColors);
 
 export function setHighlightColor(level, color)

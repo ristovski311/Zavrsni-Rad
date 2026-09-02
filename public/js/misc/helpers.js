@@ -61,6 +61,37 @@ export function ShowYesNoDialog(text, yesText, noText) {
    
 }
 
+export function ShowInfoDialog(text, yesText, noText) {
+    return new Promise(
+        resolve => {
+            const overlay = document.createElement("div");
+            overlay.className = "overlay";
+        
+            const dialogContainer = DrawElement(overlay, "div", ["dialog-container"]);
+            const dialogTextContainer = DrawElement(dialogContainer, "div", ["dialog-text-container"]);
+            const dialogText = DrawElement(dialogTextContainer, "h2", ["dialog-text"], text)
+            const dialogBtnContainer = DrawElement(dialogContainer, "div", ["dialog-btn-container"]);
+            const dialogBtnYes = DrawElement(dialogBtnContainer, "button", ["dialog-btn-yes"], yesText);
+            const dialogBtnNo = DrawElement(dialogBtnContainer, "button", ["dialog-btn-no"], noText);
+        
+            dialogBtnYes.addEventListener("click", () =>
+            {
+                overlay.remove();
+                resolve(true);
+            })
+        
+            dialogBtnNo.addEventListener("click", () =>
+            {
+                overlay.remove();
+                resolve(false);
+            })
+
+            document.body.appendChild(overlay);
+        }
+    )
+   
+}
+
 export function AddShortcut(container, keys, callback)
 {
     container.addEventListener("keydown", (event) => {

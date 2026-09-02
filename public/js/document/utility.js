@@ -114,7 +114,7 @@ function ChangeTheme(theme, modalContainer)
 
 
 // Informacije o aplikaciji
-export function OpenInformationModal(container)
+export function OpenInformationModal(container, info)
 {
     return new Promise(
         resolve => {
@@ -124,18 +124,8 @@ export function OpenInformationModal(container)
             const modalContainer = DrawElement(overlay, "div", ["modal-container"]);
             const modalTextContainer = DrawElement(modalContainer, "div", ["modal-text-container"]);
             const modalText = DrawElement(modalTextContainer, "h2", ["modal-text"], "About this application")
-            
-            const aboutText = `
-                Highlighter
 
-                Creator: Nikola Ristovski [index: 19347]
-                Reason behind: Bachelor's thesis (Capstone Project)
-                Place: Faculty of Electronic Engineering, University of Nis
-                Date: July - September 2026.
-                Mentors: Ivan Milentijevic, Oliver Vojinovic
-            `
-
-            const modalInfoText = DrawElement(modalContainer, "p", ["modal-info-text"], aboutText)
+            const modalInfoText = DrawElement(modalContainer, "p", ["modal-info-text"], info)
 
             const modalBtnContainer = DrawElement(modalContainer, "div", ["modal-btn-container"]);
             const modalBtnCancel = DrawElement(modalBtnContainer, "button", ["modal-btn-cancel"], "Close");

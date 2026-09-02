@@ -1,11 +1,11 @@
-import { DrawElement, GetFileExtension, ShowYesNoDialog, AddShortcut, ShowLoadingOverlay } from "../misc/helpers.js";
-import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setAllPages, setCurrentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel, setActiveCustomLevel, isCustomHighlightActive } from "../state/app_state.js";
+import { DrawElement, GetFileExtension, ShowYesNoDialog, AddShortcut } from "../misc/helpers.js";
+import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel } from "../state/app_state.js";
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
 import { OpenPageSelectionModal, RenderPages, ShowPage } from "./page_rendering.js";
-import { DrawLevelsFAB, RenderLevelButtons, ToggleCustomHighlight } from "./levels.js";
-import { Highlight, RenderHighlights } from "./highlighting.js";
-import { UpdateHighlightButtonState, RefreshAllButtonStates,RefreshAllEditButtonStates } from "./levels.js";
+import { DrawLevelsFAB, ToggleCustomHighlight } from "./levels.js";
+import { RenderHighlights } from "./highlighting.js";
+import { RefreshAllButtonStates,RefreshAllEditButtonStates } from "./levels.js";
 import { OpenInformationModal, OpenThemeSelectModal, ResolveLocalResources } from "../document/utility.js";
 import { OpenTestingModal } from "../testing/test.js";
 
@@ -44,7 +44,16 @@ export async function DrawMainPage(container)
     // About app
     const aboutButton = DrawElement(customizationContainer, "button", ["about-button", "toolbar-element"], "About app");
     aboutButton.addEventListener("click", () => {
-        OpenInformationModal(mainContainer);
+        const aboutText = `
+                            Highlighter
+                            
+                            Creator: Nikola Ristovski [index: 19347]
+                            Reason behind: Bachelor's thesis (Capstone Project)
+                            Place: Faculty of Electronic Engineering, University of Nis
+                            Date: July - September 2026.
+                            Mentors: Ivan Milentijevic, Oliver Vojinovic
+                        `
+        OpenInformationModal(mainContainer, aboutText);
     });
 
 
