@@ -29,7 +29,7 @@ export async function DrawLevelsFAB(container)
             if(app_state.getCurrentLevelCount() === maxHighlightLevels)
             {
                 await OpenInformationModal(container, "We currently support only 6 levels of highlights.");
-                resolve();
+                return;
             }
             else
             {
@@ -45,7 +45,7 @@ export async function DrawLevelsFAB(container)
         RenderLevelButtons(highlightLevelsContainer);
 }
 
-function OpenCreateLevelModal(container)
+function OpenCreateLevelModal()
 {
     return new Promise(
         resolve => {
@@ -83,7 +83,7 @@ function OpenCreateLevelModal(container)
             formTypeRadioAI.value = "AI"
             formTypeRadioAI.checked = true;
             formTypeRadioAI.addEventListener("change", () => {
-                modalForm.querySelector(".modal-form-percent-container").style.display = "flex";
+                modalForm.querySelector(".modal-ai-modifications-container").style.display = "flex";
             })
 
             formTypeRadioCustom.type = "radio";
@@ -91,7 +91,7 @@ function OpenCreateLevelModal(container)
             formTypeRadioCustom.name = "highlightType"
             formTypeRadioCustom.value = "Custom"
             formTypeRadioCustom.addEventListener("change", () => {
-                modalForm.querySelector(".modal-form-percent-container").style.display = "none";
+                modalForm.querySelector(".modal-ai-modifications-container").style.display = "none";
             })
 
             formTypeLblContainer.addEventListener("change", () => {
@@ -104,7 +104,23 @@ function OpenCreateLevelModal(container)
                 }
             })
             
-            const formPercentContainer = DrawElement(modalForm, "div", ["modal-form-group-container", "modal-form-percent-container"])
+            const aiHighlightModificationsContainer = DrawElement(modalForm, "div", ["modal-form-group-container", "modal-ai-modifications-container"]) 
+
+            const highlightAreaContainer = DrawElement(aiHighlightModificationsContainer, "div", ["modal-form-group-container", "modal-form-highlight-area-container"])
+            const formHighlightAreaLbl = DrawElement(highlightAreaContainer, "label", ["form-highlight-area-lbl"], "Highlight area");
+            const highlightAreaSelect = DrawElement(highlightAreaContainer, "select", ["form-highlight-area-select"]);
+
+            // Highlight preko cele stranice
+            const wholePageOption = DrawElement(highlightAreaSelect,"option", [], "Whole page");
+            wholePageOption.value = 0;
+
+            // Highlight samo preko vec highlight-ovanih delova nekog od levela
+            for (let level = 1; level <= app_state.getCurrentLevelCount(); level++) {
+                const option = DrawElement(highlightAreaSelect, "option",[],`Level ${level}`);
+                option.value = level;
+            }
+            
+            const formPercentContainer = DrawElement(aiHighlightModificationsContainer, "div", ["modal-form-group-container", "modal-form-percent-container"])
             const formPercentLbl = DrawElement(formPercentContainer, "label", ["form-percent-lbl"], "% of text");
             const formPercentInput = DrawElement(formPercentContainer, "input", ["form-percent-input", "modal-input"]);
             formPercentInput.type = "number";
@@ -118,7 +134,7 @@ function OpenCreateLevelModal(container)
 
             modalBtnConfirm.addEventListener("click", () =>
             {
-                app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null)
+                app_state.addLevel(newLevelCount, formTypeRadioAI.checked ? "ai" : "custom", formTypeRadioAI.checked ? formPercentInput.value : null, parseInt(highlightAreaSelect.value))
                 overlay.remove();
                 resolve(true);
             })
@@ -133,64 +149,6 @@ function OpenCreateLevelModal(container)
         }
     )
 }
-
-/* Slider-i - kasnije implementirati
-
-            const colorPickerContainer = DrawElement(modalContainer, "div", ["color-picker-container"]);
-            const slidersContainer = DrawElement(colorPickerContainer, "div", ["color-sliders-container"]);
-            const previewContainer = DrawElement(colorPickerContainer, "div", ["color-preview-container"], "lorem impsum");
-
-            const hue = CreateColorSlider("H", 0, 360, 180);
-            const saturation = CreateColorSlider("S", 0, 100, 70);
-            const lightness = CreateColorSlider("L", 0, 100, 70);
-
-            slidersContainer.appendChild(hue.container);
-            slidersContainer.appendChild(saturation.container);
-            slidersContainer.appendChild(lightness.container);
-
-            function UpdatePreview() {
-                const h = hue.slider.value;
-                const s = saturation.slider.value;
-                const l = lightness.slider.value;
-
-                const color = `hsl(${h}, ${s}%, ${l}%)`;
-
-                previewContainer.style.backgroundColor = color;
-
-                hue.labelElement.textContent = `H: ${h}`;
-                saturation.labelElement.textContent = `S: ${s}%`;
-                lightness.labelElement.textContent = `L: ${l}%`;
-            }
-
-            hue.slider.addEventListener("input", UpdatePreview);
-            saturation.slider.addEventListener("input", UpdatePreview);
-            lightness.slider.addEventListener("input", UpdatePreview);
-
-            UpdatePreview();
-
-function CreateColorSlider(label, min, max, value) {
-
-    const container = document.createElement("div");
-    container.className = "color-slider";
-
-    const labelElement = document.createElement("label");
-    labelElement.textContent = `${label}: ${value}`;
-
-    const slider = document.createElement("input");
-    slider.type = "range";
-    slider.min = min;
-    slider.max = max;
-    slider.value = value;
-
-    container.appendChild(labelElement);
-    container.appendChild(slider);
-
-    return {
-        container,
-        slider,
-        labelElement
-    };
-} */
 
 export function RenderLevelButtons(container)
 {
@@ -207,9 +165,12 @@ function DrawLevelButton(container, level, type, percent)
 {
     let btnContainer = DrawElement(container, "div", ["highlight-level-btn-container"]);
     const clr = getHighlightColor(level);
-    console.log(clr)
     btnContainer.style.backgroundColor = clr;
-    let levelButton = DrawElement(btnContainer, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
+
+    let levelTypeIcon = DrawElement(btnContainer, "p", ["highlight-level-type-icon"], type === "ai" ? "AI" : "CUSTOM")
+
+    let levelBtnGroup = DrawElement(btnContainer, "div", ["highlight-btn-holder"]);
+    let levelButton = DrawElement(levelBtnGroup, "button", ["highlight-level-btn", `higlight-type-${type}`, `highlight-level-${level}-btn`, "highlight-unhighlighted"]);
     levelButton.dataset.level = level;
     if(type === "ai")
     {
@@ -233,13 +194,22 @@ function DrawLevelButton(container, level, type, percent)
 
     let levelInfoContainer = DrawElement(levelButton, "div", ["level-info-container"])
     let levelInfoHeader = DrawElement(levelInfoContainer, "p", ["level-info-header"], `LVL ${level}`)
-    let infoTypeText = `${type.toUpperCase()}`
     if(type === "ai")
-        infoTypeText += ` [${percent}%]`;
-    let levelInfoType = DrawElement(levelInfoContainer, "p", ["level-info-type"], infoTypeText)
+    {
+        const lvl = app_state.getLevel(level);
+        let lvlHighlightArea = "";
+        if(lvl)
+            lvlHighlightArea = lvl.getHighlightArea();
+        if(lvlHighlightArea == 0)
+            lvlHighlightArea = "Page";
+        else
+            lvlHighlightArea = `LVL ${lvlHighlightArea}`;
+        let infoTypeText = `${percent}% of ${lvlHighlightArea}`;
+        let levelInfoType = DrawElement(levelInfoContainer, "p", ["level-info-type"], infoTypeText)
+    }
     if(type === "custom")
     {
-        let levelCustomEditBtn = DrawElement(btnContainer, "button", ["highlight-edit-btn", `highlight-edit-${level}-btn`], "✎");
+        let levelCustomEditBtn = DrawElement(levelBtnGroup, "button", ["highlight-edit-btn", `highlight-edit-${level}-btn`], "✎");
         levelCustomEditBtn.dataset.level = level;
         levelCustomEditBtn.addEventListener("click", () => {
             ToggleCustomHighlight(level);

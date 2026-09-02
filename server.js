@@ -99,17 +99,48 @@ async function CreateTestQuestions(text, numberOfQ, numberOfA)
     return parsed;
 }
 
-async function GetHighlights(text, percent)
+async function GetHighlights(text, percent, allowedIndices)
 {
     const tokens = TokenizeServerSide(text);
-    const targetCount = Math.max(1, Math.round(tokens.length * (percent/100)));
     const numberedWords = tokens.map(t => `${t.index}:${t.word}`).join(" ");
 
-    const prompt = `Below is a numbered list of words from an academic lecture, in the format index:word.
-    Act as a student highlighting key phrases in this text with a highlighter pen — you highlight in short continuous runs of words (phrases/clauses), not scattered single words.
-    Highlight approximately ${percent}% of the total ${tokens.length} words this way.
+    // const prompt = `Below is a numbered list of words from an academic lecture, in the format index:word.
+    // Act as a student highlighting key phrases in this text with a highlighter pen — you highlight in short continuous runs of words (phrases/clauses), not scattered single words.
+    // Highlight approximately ${percent}% of the total ${tokens.length} words this way.
 
-    Respond with a JSON object of the exact form {"spans": [[startIndex, endIndex], [startIndex, endIndex], ...]}, where each pair is an inclusive start and end word index for one continuous highlighted run. Output nothing else.
+    // Respond with a JSON object of the exact form {"spans": [[startIndex, endIndex], [startIndex, endIndex], ...]}, where each pair is an inclusive start and end word index for one continuous highlighted run. Output nothing else.
+
+    // Words: ${numberedWords}`;
+
+    const allowedCount = allowedIndices ? allowedIndices.length : tokens.length;
+    const targetCount = Math.round(allowedCount * percent / 100);
+
+    let allowedInstruction = "";
+
+    if (allowedIndices !== null) {
+        allowedInstruction = `
+    IMPORTANT:
+    You may ONLY highlight words whose indices are in this list:
+    allowedIndices: ${JSON.stringify(allowedIndices)}
+
+    Do NOT highlight any other indices.
+    `;
+    }
+
+    const prompt = `Below is a numbered list of words from an academic lecture, in the format index:word.
+    Act as a student highlighting key phrases in this text with a highlighter pen.
+
+    Highlight approximately ${targetCount} of the ${allowedIndices === null ? "total" : "allowed"} ${allowedIndices === null ? tokens.length : allowedIndices.length} words.
+    Highlight in short continuous runs of words (phrases/clauses), not scattered single words.
+
+    ${allowedInstruction}
+
+    Respond with a JSON object of the exact form:
+    {"spans": [[startIndex, endIndex], [startIndex, endIndex], ...]}
+
+    Each pair is an inclusive start and end word index.
+    All indices must be original indices from the numbered word list.
+    Output nothing else.
 
     Words: ${numberedWords}`;
 
@@ -149,7 +180,8 @@ async function GetHighlights(text, percent)
     const indices = [];
     for(const [start, end] of spans)
     {
-        for(let i = start; i <= end; i++) indices.push(i);
+        for(let i = start; i < end; i++) 
+            indices.push(i);
     }
 
     return indices;
@@ -160,7 +192,7 @@ const server = http.createServer(async (req, res) => {
     if (req.url.startsWith("/api/highlight") && req.method === "POST") {
         try {
             const bodyBuffer = await readReqBody(req);
-            const { text, percent } = JSON.parse(bodyBuffer.toString());
+            const { text, percent, allowedIndices } = JSON.parse(bodyBuffer.toString());
 
             if (!text || !percent) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -168,7 +200,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
 
-            const indices = await GetHighlights(text, percent);
+            const indices = await GetHighlights(text, percent, allowedIndices);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ indices }));

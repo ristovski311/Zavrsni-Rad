@@ -22,7 +22,6 @@ export const highlightColors = {
 
 loadCurrentTheme();    
 CreateHighlightStyles();
-console.log(highlightColors);
 
 export function setHighlightColor(level, color)
 {

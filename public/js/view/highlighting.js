@@ -7,6 +7,20 @@ export async function Highlight(pageContainer, percent, level, btn)
     const pageContentElement = activePaper.querySelector(".page-content");
     const pageContentText = pageContentElement.textContent;
 
+    const lvl = app_state.getLevel(level);
+    if(!lvl)
+        return;
+    
+    const lvlHighlightArea = lvl.getHighlightArea();
+    
+    let allowedIndices = null;
+    if (lvlHighlightArea !== 0) {
+        allowedIndices = app_state.getIndicesForPageAndLevel(lvlHighlightArea, currentPageIndex);
+
+        if (!allowedIndices || allowedIndices.length === 0)
+            return; // Jos nije highlight-ovan deo u okviru zavisnog levela ispod
+    }
+
     try{
         // Moramo da proverimo da li je highlight tog levela
         // Za tu stranicu vec napravljen
@@ -17,7 +31,11 @@ export async function Highlight(pageContainer, percent, level, btn)
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({text: pageContentText, percent})
+                body: JSON.stringify({
+                    text: pageContentText,
+                    percent,
+                    allowedIndices
+                })
             });
     
             if(!response.ok)

@@ -47,6 +47,12 @@ export class HighlightManager
         lvl.setPageIndices(page, indices);
     }
 
+    getLevel(lvlNumber)
+    {
+        const lvl = this.levels.find(x => x.level === lvlNumber);
+        return lvl;
+    }
+
     getActiveLevelsForPage(page)
     {
         if(page in this.activeLevelsByPage)
@@ -114,11 +120,11 @@ export class HighlightManager
         return curPage.indices;
     }
 
-    addLevel(level, type, percent = null)
+    addLevel(level, type, percent = null, highlightArea = 0)
     {
         if(!this.levels.some(l => l.level === level))       
         {
-            this.levels.push(new HighlightLevel(level, type, percent));
+            this.levels.push(new HighlightLevel(level, type, percent, highlightArea));
         }
     }
 

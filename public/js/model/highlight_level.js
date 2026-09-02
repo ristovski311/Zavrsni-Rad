@@ -1,11 +1,17 @@
 export class HighlightLevel 
 {
-    constructor(level, type, percent)
+    constructor(level, type, percent, highlightArea)
     {
         this.level = level;
         this.type = type;
+        this.highlightArea = highlightArea;
         this.percent = percent;
         this.pages = []
+    }
+
+    getHighlightArea()
+    {
+        return this.highlightArea;
     }
 
     getPageIndices(pageId)
@@ -74,6 +80,7 @@ export class HighlightLevel
         return {
             level: this.level,
             type: this.type,
+            highlightArea: this.highlightArea,
             percent: this.percent,
             pages: this.pages
         }
@@ -81,7 +88,7 @@ export class HighlightLevel
 
     static fromJSON(json_obj)
     {
-        const level = new HighlightLevel(json_obj.level, json_obj.type, json_obj.percent);
+        const level = new HighlightLevel(json_obj.level, json_obj.type, json_obj.percent, json_obj.highlightArea);
         level.pages = json_obj.pages;
         return level;
     }
