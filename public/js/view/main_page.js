@@ -30,16 +30,16 @@ export async function DrawMainPage(container)
     const customizationContainer = DrawElement(optionsToolbar, "div", ["customization-container"])
     
     // Testing - sakrivena opcija dok se ne pritisne shortcut SHIFT + T
-    const testButton = DrawElement(customizationContainer, "button", ["testing-button", "toolbar-element", "hidden"], "Run a test");
+    const testButton = DrawElement(customizationContainer, "button", ["testing-button", "toolbar-element", "hidden"], "Test your knowledge");
     testButton.addEventListener("click", () => {
         OpenTestingModal(mainContainer);
     });
 
     //Shortcut SHIFT + T
-    AddShortcut(document, {shift: true, key: "t"}, () => {
-        if(app_state)
-            testButton.classList.remove("hidden");
-    });
+    // AddShortcut(document, {shift: true, key: "t"}, () => {
+    //     if(app_state)
+    //         testButton.classList.remove("hidden");
+    // });
 
     // About app
     const aboutButton = DrawElement(customizationContainer, "button", ["about-button", "toolbar-element"], "About app");
@@ -178,7 +178,7 @@ export async function DrawMainPage(container)
         
         const contentFile = files.find(f => {
             const extension = GetFileExtension(f.name);
-            return extension === "html" || extension === "md";
+            return extension === "htm" || extension === "html" || extension === "md";
         });
 
         const stateFile = files.find(f => {
@@ -194,7 +194,7 @@ export async function DrawMainPage(container)
         
         const extension = GetFileExtension(contentFile.name);
         const fileName = contentFile.name;
-        if (extension === "md" || extension === "html") 
+        if (extension === "md" || extension === "html" || extension === "htm") 
         {
             // Cuvanje prethodnog stanja
             if(app_state)
@@ -253,6 +253,9 @@ export async function DrawMainPage(container)
             const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
             if(stateSaveBtn.classList.contains("hidden"))
                 stateSaveBtn.classList.toggle("hidden");
+
+            if(testButton.classList.contains("hidden"))
+                testButton.classList.remove("hidden");
             
             // Naziv file-a
             fileNameHeader.textContent = fileName;
