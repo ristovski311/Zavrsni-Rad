@@ -18,7 +18,7 @@ export function OpenTestingModal(container)
             const createTestButton = DrawElement(testContainer, "button", ["modal-btn-confirm"], "Create a test!");
             createTestButton.addEventListener("click", async () => {
                 createTestButton.classList.toggle("hidden", true);
-                const hideOverlay = ShowLoadingOverlay();
+                const hideOverlay = await ShowLoadingOverlay();
                 try{
                     await DrawTest(testContainer);
                 }

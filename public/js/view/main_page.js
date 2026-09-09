@@ -1,4 +1,4 @@
-import { DrawElement, GetFileExtension, ShowYesNoDialog, AddShortcut } from "../misc/helpers.js";
+import { DrawElement, GetFileExtension, ShowYesNoDialog, AddShortcut, ShowLoadingOverlay } from "../misc/helpers.js";
 import { app_state, createState, loadState, saveState, allPages, currentPageIndex, setPageContainer, setCurrentObjectURLs, revokeCurrentObjectURLs, activeCustomLevel } from "../state/app_state.js";
 import { TokenizeDOM } from "../document/tokenization.js";
 import { PaginateContent } from "../document/pagination.js";
@@ -172,108 +172,121 @@ export async function DrawMainPage(container)
     // File input handler za odabir doc-a i state-a
 
     fileInput.addEventListener("change", async () => {
-        const files = Array.from(fileInput.files);
-        if(files.length === 0)
-            return;
-        
-        const contentFile = files.find(f => {
-            const extension = GetFileExtension(f.name);
-            return extension === "htm" || extension === "html" || extension === "md";
-        });
+        let hideOverlay;
 
-        const stateFile = files.find(f => {
-            const extension = GetFileExtension(f.name);
-            return extension === "hljson";
-        });
-        
-        if(!contentFile)
+        try
         {
-            alert("No HTML or MD file found!");
-            return;
-        }
-        
-        const extension = GetFileExtension(contentFile.name);
-        const fileName = contentFile.name;
-        if (extension === "md" || extension === "html" || extension === "htm") 
-        {
-            // Cuvanje prethodnog stanja
-            if(app_state)
+
+            const files = Array.from(fileInput.files);
+            if(files.length === 0)
+                return;
+    
+            const contentFile = files.find(f => {
+                const extension = GetFileExtension(f.name);
+                return extension === "htm" || extension === "html" || extension === "md";
+            });
+    
+            const stateFile = files.find(f => {
+                const extension = GetFileExtension(f.name);
+                return extension === "hljson";
+            });
+            
+            if(!contentFile)
             {
-                const decision = await ShowYesNoDialog("Do you want to save the current state?", "Yes", "No")
-                if(decision)
-                    saveState();
+                alert("No HTML or MD file found!");
+                return;
             }
             
-            revokeCurrentObjectURLs();
+            const extension = GetFileExtension(contentFile.name);
+            const fileName = contentFile.name;
+            if (extension === "md" || extension === "html" || extension === "htm") 
+            {
+                // Cuvanje prethodnog stanja
+                if(app_state)
+                {
+                    const decision = await ShowYesNoDialog("Do you want to save the current state?", "Yes", "No")
+                    if(decision)
+                        saveState();
+                }
+                
+                hideOverlay = await ShowLoadingOverlay();
 
-            // Parsiranje ucitanog file-a u html ako je .md
-            let rawHTML;
-            if(extension === "md")
-                rawHTML = marked.parse(await contentFile.text())
+                revokeCurrentObjectURLs();
+    
+                // Parsiranje ucitanog file-a u html ako je .md
+                let rawHTML;
+                if(extension === "md")
+                    rawHTML = marked.parse(await contentFile.text())
+                else
+                    rawHTML = await contentFile.text();
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(rawHTML, "text/html");
+                
+                //Resavanje lokalnih image-a
+                const urls = ResolveLocalResources(doc, contentFile, files);
+                setCurrentObjectURLs(urls);
+    
+                // const articleElement = doc.querySelector("#mw-content-text") || doc.body;
+                const articleElement = doc.querySelector("#mw-content-text")
+                                    || doc.querySelector("article")
+                                    || doc.querySelector("main")
+                                    || doc.querySelector(".entry-content")
+                                    || doc.querySelector(".post-content")
+                                    || doc.querySelector("#content")
+                                    || doc.body;
+                articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
+                
+                // Tokenizacija html dokumenta dobijenog parsiranjem .md
+                const tempContainer = document.createElement("div");
+                tempContainer.innerHTML = articleElement.innerHTML;
+                TokenizeDOM(tempContainer);
+                
+                // Rezultat je lista 
+                const pages = await PaginateContent(tempContainer);
+                
+                //Kreiranje novog stanja
+                createState(fileName, pages.length)
+                
+                //Rendering stranica
+                await RenderPages(pageContainer, pages);
+                pageIndicator.textContent = `1 / ${pages.length}`
+                
+                // Dugmici za stanja
+                const stateLoaderLbl = mainContainer.querySelector(".file-state-loader-btn");
+                if(stateLoaderLbl.classList.contains("hidden"))
+                    stateLoaderLbl.classList.toggle("hidden");
+                
+                const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
+                if(stateSaveBtn.classList.contains("hidden"))
+                    stateSaveBtn.classList.toggle("hidden");
+    
+                if(testButton.classList.contains("hidden"))
+                    testButton.classList.remove("hidden");
+                
+                // Naziv file-a
+                fileNameHeader.textContent = fileName;
+                await DrawLevelsFAB(mainContainer);
+    
+                //Load prethodnog stanja ako ga je bilo u direktorijumu
+                if(stateFile)
+                {
+                    const fileText = await stateFile.text();
+                    const jsonObj = JSON.parse(fileText);
+                    loadState(jsonObj);
+                    DrawLevelsFAB(mainContainer);
+                    RenderHighlights(pageContainer);
+                }
+            } 
             else
-                rawHTML = await contentFile.text();
-            
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(rawHTML, "text/html");
-            
-            //Resavanje lokalnih image-a
-            const urls = ResolveLocalResources(doc, contentFile, files);
-            setCurrentObjectURLs(urls);
-
-            // const articleElement = doc.querySelector("#mw-content-text") || doc.body;
-            const articleElement = doc.querySelector("#mw-content-text")
-                                || doc.querySelector("article")
-                                || doc.querySelector("main")
-                                || doc.querySelector(".entry-content")   // česta WordPress klasa (baš kao ovaj sajt)
-                                || doc.querySelector(".post-content")
-                                || doc.querySelector("#content")
-                                || doc.body;
-            articleElement.querySelectorAll("script, style, noscript").forEach(el => el.remove());
-            
-            // Tokenizacija html dokumenta dobijenog parsiranjem .md
-            const tempContainer = document.createElement("div");
-            tempContainer.innerHTML = articleElement.innerHTML;
-            TokenizeDOM(tempContainer);
-            
-            // Rezultat je lista 
-            const pages = await PaginateContent(tempContainer);
-            
-            //Kreiranje novog stanja
-            createState(fileName, pages.length)
-            
-            //Rendering stranica
-            await RenderPages(pageContainer, pages);
-            pageIndicator.textContent = `1 / ${pages.length}`
-            
-            // Dugmici za stanja
-            const stateLoaderLbl = mainContainer.querySelector(".file-state-loader-btn");
-            if(stateLoaderLbl.classList.contains("hidden"))
-                stateLoaderLbl.classList.toggle("hidden");
-            
-            const stateSaveBtn = mainContainer.querySelector(".file-state-save-btn");
-            if(stateSaveBtn.classList.contains("hidden"))
-                stateSaveBtn.classList.toggle("hidden");
-
-            if(testButton.classList.contains("hidden"))
-                testButton.classList.remove("hidden");
-            
-            // Naziv file-a
-            fileNameHeader.textContent = fileName;
-            await DrawLevelsFAB(mainContainer);
-
-            //Load prethodnog stanja ako ga je bilo u direktorijumu
-            if(stateFile)
             {
-                const fileText = await stateFile.text();
-                const jsonObj = JSON.parse(fileText);
-                loadState(jsonObj);
-                DrawLevelsFAB(mainContainer);
-                RenderHighlights(pageContainer);
+                alert("Unsupported file type selected!");
             }
-        } 
-        else
+        }
+        finally
         {
-            alert("Unsupported file type selected!");
+            if(hideOverlay)
+                hideOverlay();
         }
     });
 

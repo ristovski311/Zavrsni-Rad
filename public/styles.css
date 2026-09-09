@@ -639,11 +639,17 @@ img {
 }
 
 .page-content {
+    width: 100%;
     padding: 40px;
     height: 100%;
     box-sizing: border-box;
     /* overflow: scroll; */
     font-size: 18px;
+}
+
+.page-content table {
+    align-self: center;
+    width: 100%;
 }
 
 .page-content ::selection
@@ -998,6 +1004,7 @@ pre {
     font-size:64px;
     color:var(--color_4);
     animation:spin 1.2s linear infinite;
+    transform-origin: center;
 }
 
 @keyframes spin{

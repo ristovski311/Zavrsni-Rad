@@ -16,7 +16,7 @@ export function GetFileExtension(filename) {
     return filename.slice(filename.lastIndexOf(".") + 1).toLowerCase();
 }
 
-export function ShowLoadingOverlay() {
+export function ShowHighlightOverlay() {
     const overlay = document.createElement("div");
     overlay.className = "overlay";
 
@@ -28,6 +28,26 @@ export function ShowLoadingOverlay() {
     document.body.appendChild(overlay);
 
     return () => overlay.remove();
+}
+
+export function ShowLoadingOverlay() {
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+
+    const star = document.createElement("div");
+    overlay.appendChild(star);
+    star.textContent = "✎";
+    star.className = "star";
+
+    document.body.appendChild(overlay);
+
+    return new Promise(resolve => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                resolve(() => overlay.remove());
+            });
+        });
+    });
 }
 
 export function ShowYesNoDialog(text, yesText, noText) {

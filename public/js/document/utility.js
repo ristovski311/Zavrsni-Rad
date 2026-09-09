@@ -10,7 +10,6 @@ export function ResolveLocalResources(content, contentFile, files)
 {
     const filesByPath = new Map();
 
-    //Relativna putanja -> File
     for(const f of files)
     {
         filesByPath.set(f.webkitRelativePath, f);
@@ -28,7 +27,6 @@ export function ResolveLocalResources(content, contentFile, files)
         if(!src)
             continue;
 
-        // Udaljeni file-ovi
         if(
             src.startsWith("http://") ||
             src.startsWith("https://") ||
@@ -39,7 +37,9 @@ export function ResolveLocalResources(content, contentFile, files)
             continue;
         }
 
-        const fullPath = mainDirectory + src;
+        const decodedSrc = decodeURIComponent(src);
+        const fullPath = mainDirectory + decodedSrc;
+        
         const imageFile = filesByPath.get(fullPath);
         if(!imageFile)
         {

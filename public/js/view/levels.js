@@ -1,5 +1,5 @@
 import { activeCustomLevel, app_state, currentPageIndex, getHighlightColor, isCustomHighlightActive, maxHighlightLevels, pageContainer,setActiveCustomLevel } from "../state/app_state.js";
-import { DrawElement, ShowLoadingOverlay } from "../misc/helpers.js";
+import { DrawElement, ShowLoadingOverlay, ShowHighlightOverlay } from "../misc/helpers.js";
 import { Highlight, ToggleHighlightVisibility,HandleCustomHighlightSelection } from "./highlighting.js";
 import { OpenInformationModal } from "../document/utility.js";
 
@@ -175,7 +175,7 @@ function DrawLevelButton(container, level, type, percent)
     if(type === "ai")
     {
         levelButton.addEventListener("click", async (e) => {
-            const hideOverlay = ShowLoadingOverlay();
+            const hideOverlay = ShowHighlightOverlay();
             try{
                 await Highlight(pageContainer, percent, level, levelButton);
             }
