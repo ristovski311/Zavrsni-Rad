@@ -1133,3 +1133,88 @@ video
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     text-align: center;
 }
+
+/*Za telefone*/
+
+@media screen and (max-width: 768px) {
+    body {
+        font-size: 14px;
+        flex-direction: column;
+    }
+
+    .paper {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh;
+        box-shadow: none;
+        padding: 4px;
+    }
+
+    .page-content {
+        padding: 16px;
+        font-size: 16px;
+    }
+
+    .header-container {
+        position: relative;
+    }
+
+    .options-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .options-toolbar {
+        flex-direction: column;
+        border-radius: 0 0 16px 16px;
+        gap: 8px;
+    }
+
+    .customization-container {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .file-input-container {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .toolbar-element {
+        min-width: 40%;
+    }
+
+    .levels-fab-container {
+        right: 8px;
+        bottom: 8px;
+        max-height: 50vh;
+    }
+
+    .modal-container {
+        min-width: 90%;
+        max-width: 95%;
+        margin: 16px;
+    }
+
+    .modal-form-group-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-input, 
+    .custom-form-type-radio, 
+    .modal-btn-confirm, 
+    .modal-btn-cancel {
+        width: 100%;
+    }
+
+    .color-picker-container {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .color-sliders-container {
+        width: 100%;
+    }
+}

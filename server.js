@@ -66,6 +66,28 @@ async function CreateTestQuestions(text, numberOfQ, numberOfA)
                     TEXT:
                     ${text}
                 `;
+    // const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+    //     method: "POST",
+    //     headers: {
+    //         "Content-Type": "application/json",
+    //         "Authorization": `Bearer ${process.env.CEREBRAS_API_KEY}`
+    //     },
+    //     body: JSON.stringify({
+    //         model: "gpt-oss-120b",
+    //         messages: [
+    //             {
+    //                 role: "user",
+    //                 content: prompt
+    //             }
+    //         ],
+    //         temperature: 0,
+    //         max_completion_tokens: 4096,
+    //         response_format: {
+    //             type: "json_object"
+    //         }
+    //     })
+    // });
+
     const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -73,7 +95,7 @@ async function CreateTestQuestions(text, numberOfQ, numberOfA)
             "Authorization": `Bearer ${process.env.CEREBRAS_API_KEY}`
         },
         body: JSON.stringify({
-            model: "gemma-4-31b",
+            model: "gpt-oss-120b",
             messages: [{ role: "user", content: prompt }],
             temperature: 0,
             max_completion_tokens: 4096,
@@ -84,7 +106,7 @@ async function CreateTestQuestions(text, numberOfQ, numberOfA)
     if(!response.ok)
     {
         const errText = await response.text();
-        throw new Error(`Gemini API error: ${response.status} ${errText}`);
+        throw new Error(`API error: ${response.status} ${errText}`);
     }
 
     const data = await response.json();
@@ -126,20 +148,31 @@ async function GetHighlights(text, percent, allowedIndices)
     `;
     }
 
-    const prompt = `Below is a numbered list of words from an academic lecture, in the format index:word.
-    Act as a student highlighting key phrases in this text with a highlighter pen.
+    const prompt = `You are highlighting an academic text for studying.
 
-    Highlight approximately ${targetCount} of the ${allowedIndices === null ? "total" : "allowed"} ${allowedIndices === null ? tokens.length : allowedIndices.length} words.
-    Highlight in short continuous runs of words (phrases/clauses), not scattered single words.
+    Select the most important information: key concepts, definitions, facts,
+    relationships, and conclusions.
+
+    Highlight approximately ${targetCount} words out of ${allowedIndices === null ? tokens.length : allowedIndices.length}.
+
+    IMPORTANT:
+    - Distribute highlights throughout the ENTIRE text.
+    - Do not highlight one large continuous portion.
+    - Use many short continuous phrases, usually 3–10 words.
+    - Leave unhighlighted text between highlighted phrases.
+    - Choose based on importance, not position.
+    - Do not favor the beginning of the text.
+    - ONLY highlight words whose indices are in the allowed indices list.
+    - NEVER include an index outside the allowed indices list.
+    - A span [start,end] is valid ONLY if EVERY index from start to end is allowed.
 
     ${allowedInstruction}
 
-    Respond with a JSON object of the exact form:
-    {"spans": [[startIndex, endIndex], [startIndex, endIndex], ...]}
+    Return ONLY this JSON:
+    {"spans":[[startIndex,endIndex],...]}
 
-    Each pair is an inclusive start and end word index.
-    All indices must be original indices from the numbered word list.
-    Output nothing else.
+    Indices are inclusive and must be original word indices.
+    Every index in every span MUST belong to the allowed indices list.
 
     Words: ${numberedWords}`;
 
@@ -150,10 +183,10 @@ async function GetHighlights(text, percent, allowedIndices)
             "Authorization": `Bearer ${process.env.CEREBRAS_API_KEY}`
         },
         body: JSON.stringify({
-            model: "gemma-4-31b",
+            model: "gpt-oss-120b",
             messages: [{ role: "user", content: prompt }],
             temperature: 0,
-            max_completion_tokens: 4096,
+            max_completion_tokens: 8192,
             response_format: { type: "json_object" }
         })
     });
