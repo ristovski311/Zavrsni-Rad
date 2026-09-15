@@ -216,7 +216,7 @@ span {
 
 @font-face { 
     font-family: 'HeaderFont'; 
-    src: url('./fonts/PatuaOne-Regular.ttf') format('truetype'); 
+    src: url('./assets/fonts/PatuaOne-Regular.ttf') format('truetype'); 
     font-weight: normal; 
     font-style: normal; 
 }
