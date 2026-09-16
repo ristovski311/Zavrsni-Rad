@@ -406,11 +406,17 @@ p {
     display: flex;
     flex-direction: column-reverse;
     overflow-y: scroll;
-    overflow-x: hidden;
+    /* overflow-x: hidden; */
+    scrollbar-width: none;
     background-color: var(--back_3);
     max-height: 60vh;
     width: 100%;
     gap: 7px;
+}
+
+.highlight-levels-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .no-height
@@ -486,16 +492,19 @@ p {
 {
     font-size: 95%;
     font-weight: bold;
+    font-family: 'HeaderFont';
 }
 
 .level-info-type
 {
     font-size: 70%;
+    font-family: 'HeaderFont';
 }
 
 .level-info-percent
 {
-    font-size: 69%;
+    font-size: 70%;
+    font-family: 'HeaderFont';
 }
 
 .highlight-edit-btn
@@ -620,7 +629,13 @@ img {
     align-items: center;
     transform-origin: top center; /*Prilikom zoom-iranja koja je referentna tacka*/
     padding: 8px;
-    overflow: scroll;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.page-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .paper {
@@ -628,10 +643,16 @@ img {
     height: 1123px;   /* A4 na 96dpi */
     background: white;
     box-shadow: 5px 5px 5px 2px gray;
-    overflow: scroll;
+    overflow-y: auto;
+    scrollbar-width: none;
     box-sizing: border-box;
     display: none; /* Ne vidi se stranica koja nije aktivna*/
     padding: 8px;
+}
+
+.paper::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .paper.active-page {
@@ -729,7 +750,8 @@ img {
 
 .token-highlight-mode /*Prilikom custom (rucnog) highlight-a*/
 {
-    user-select:all;
+    /* user-select:all; */
+    -webkit-user-drag: none;
     cursor: pointer;
 }
 
@@ -766,7 +788,12 @@ pre {
     user-select: none;
     min-width: 30%;
     max-height: 90%;
-    overflow: scroll;
+    overflow-y: auto;
+}
+
+.modal-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .modal-text-container
@@ -813,7 +840,7 @@ pre {
 .custom-form-type-radio
 {
     padding: 8px;
-    width: 25%;
+    min-width: 25%;
     border-radius: 4px;
     background-color: var(--color_inactive);
     color: var(--color_inactive_text);

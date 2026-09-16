@@ -28,7 +28,7 @@ export async function DrawLevelsFAB(container)
         {
             if(app_state.getCurrentLevelCount() === maxHighlightLevels)
             {
-                await OpenInformationModal(container, "We currently support only 6 levels of highlights.");
+                await OpenInformationModal(container, "Maximum number of levels reached!" ,"We currently support only 6 levels of highlights.");
                 return;
             }
             else

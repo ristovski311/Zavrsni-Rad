@@ -114,7 +114,7 @@ function ChangeTheme(theme, modalContainer)
 
 
 // Informacije o aplikaciji
-export function OpenInformationModal(container, info)
+export function OpenInformationModal(container, headerText, info)
 {
     return new Promise(
         resolve => {
@@ -123,7 +123,7 @@ export function OpenInformationModal(container, info)
             
             const modalContainer = DrawElement(overlay, "div", ["modal-container"]);
             const modalTextContainer = DrawElement(modalContainer, "div", ["modal-text-container"]);
-            const modalText = DrawElement(modalTextContainer, "h2", ["modal-text"], "About this application")
+            const modalText = DrawElement(modalTextContainer, "h2", ["modal-text"], headerText)
 
             const modalInfoText = DrawElement(modalContainer, "p", ["modal-info-text"], info)
 

@@ -34,6 +34,7 @@ export function TokenizeDOM(container)
                         span.classList.add("token");
                         span.dataset.index = index;
                         span.textContent = part;
+                        span.draggable = false;
                         fragment.appendChild(span);
                         index++;
                     }
